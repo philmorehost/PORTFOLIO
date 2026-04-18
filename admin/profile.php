@@ -7,6 +7,7 @@ require_login();
 
 $csrf_token = generate_csrf_token();
 $success = '';
+$baseUrl = get_base_url();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf_token($_POST['csrf_token'])) {
@@ -39,13 +40,27 @@ $profile = get_admin_profile($pdo);
 <head>
     <meta charset="UTF-8">
     <title>Edit Profile | Portfolio 1.0</title>
+    <link rel="stylesheet" href="<?php echo $baseUrl; ?>/assets/css/theme.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/assets/css/theme.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'pitch-black': '#000000',
+                        'sharp-orange': '#FF6600',
+                        'glossy-purple': '#BF00FF',
+                        'text-dim': '#888888',
+                    }
+                }
+            }
+        }
+    </script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-pitch-black text-white p-4 md:p-10">
     <div class="max-w-4xl mx-auto space-y-12 pb-20">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between bg-white/5 border border-white/10 p-8 rounded-3xl backdrop-blur-xl">
             <h1 class="text-3xl md:text-5xl font-black italic uppercase text-glow-orange">Admin <span class="text-sharp-orange">Profile</span></h1>
             <a href="/admin" class="text-text-dim hover:text-sharp-orange transition-colors flex items-center gap-2 font-black uppercase text-xs">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
@@ -57,25 +72,25 @@ $profile = get_admin_profile($pdo);
         <?php endif; ?>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <form method="POST" class="bg-white/5 border border-white/10 p-8 rounded-xl space-y-6">
+            <form method="POST" class="bg-white/5 border border-white/10 p-8 rounded-3xl space-y-6 shadow-2xl">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <h2 class="text-xs font-black text-sharp-orange uppercase tracking-[0.4em]">Identity</h2>
                 <div class="space-y-4">
-                    <input type="text" name="full_name" value="<?php echo e($profile['full_name']); ?>" placeholder="Name" class="w-full bg-black/40 border border-white/10 rounded-lg p-3 outline-none focus:border-sharp-orange">
-                    <input type="email" name="email" value="<?php echo e($profile['email']); ?>" placeholder="Email" class="w-full bg-black/40 border border-white/10 rounded-lg p-3 outline-none focus:border-sharp-orange">
-                    <input type="text" name="whatsapp_number" value="<?php echo e($profile['whatsapp_number']); ?>" placeholder="WhatsApp (e.g. 234...)" class="w-full bg-black/40 border border-white/10 rounded-lg p-3 outline-none focus:border-sharp-orange">
-                    <textarea name="bio" rows="4" placeholder="Bio" class="w-full bg-black/40 border border-white/10 rounded-lg p-3 outline-none focus:border-sharp-orange"><?php echo e($profile['bio']); ?></textarea>
+                    <input type="text" name="full_name" value="<?php echo e($profile['full_name']); ?>" placeholder="Name" class="w-full bg-black/40 border border-white/10 rounded-xl p-4 outline-none focus:border-sharp-orange transition-all">
+                    <input type="email" name="email" value="<?php echo e($profile['email']); ?>" placeholder="Email" class="w-full bg-black/40 border border-white/10 rounded-xl p-4 outline-none focus:border-sharp-orange transition-all">
+                    <input type="text" name="whatsapp_number" value="<?php echo e($profile['whatsapp_number']); ?>" placeholder="WhatsApp (e.g. 234...)" class="w-full bg-black/40 border border-white/10 rounded-xl p-4 outline-none focus:border-sharp-orange transition-all">
+                    <textarea name="bio" rows="6" placeholder="Bio" class="w-full bg-black/40 border border-white/10 rounded-xl p-4 outline-none focus:border-sharp-orange transition-all"><?php echo e($profile['bio']); ?></textarea>
                 </div>
-                <button type="submit" name="update_profile" class="w-full py-3 bg-sharp-orange text-black font-black rounded uppercase tracking-widest text-[10px]">Save Profile</button>
+                <button type="submit" name="update_profile" class="w-full py-4 bg-sharp-orange text-black font-black rounded-xl uppercase tracking-widest text-[10px] shadow-lg">Save Profile</button>
             </form>
 
-            <form method="POST" class="bg-white/5 border border-white/10 p-8 rounded-xl space-y-6">
+            <form method="POST" class="bg-white/5 border border-white/10 p-8 rounded-3xl space-y-6 shadow-2xl">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <h2 class="text-xs font-black text-red-500 uppercase tracking-[0.4em]">Security</h2>
                 <div class="space-y-4">
-                    <input type="password" name="new_password" placeholder="NEW PASSWORD" required class="w-full bg-black/40 border border-white/10 rounded-lg p-3 outline-none focus:border-red-500">
+                    <input type="password" name="new_password" placeholder="NEW PASSWORD" required class="w-full bg-black/40 border border-white/10 rounded-xl p-4 outline-none focus:border-red-500 transition-all font-mono">
                 </div>
-                <button type="submit" name="update_pass" class="w-full py-3 bg-red-500/10 border border-red-500 text-red-500 font-black rounded uppercase tracking-widest text-[10px]">Rotate Key</button>
+                <button type="submit" name="update_pass" class="w-full py-4 bg-red-500 text-white font-black rounded-xl uppercase tracking-widest text-[10px] shadow-lg">Rotate Key</button>
             </form>
         </div>
     </div>

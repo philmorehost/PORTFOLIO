@@ -4,6 +4,11 @@ function e($string) {
     return htmlspecialchars($string ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+function get_base_url() {
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+    return $protocol . "://" . $_SERVER['HTTP_HOST'];
+}
+
 function generate_csrf_token() {
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -36,9 +41,9 @@ function get_admin_profile($pdo) {
     try {
         $stmt = $pdo->query("SELECT * FROM admin_profile LIMIT 1");
         $res = $stmt->fetch();
-        return $res ?: ['full_name' => 'Cyber Architect', 'bio' => 'Security Specialist', 'whatsapp_number' => '', 'email' => ''];
+        return $res ?: ['full_name' => 'Cyber Architect', 'bio' => 'Expert Developer', 'whatsapp_number' => '', 'email' => ''];
     } catch (Exception $e) {
-        return ['full_name' => 'Cyber Architect', 'bio' => 'Security Specialist', 'whatsapp_number' => '', 'email' => ''];
+        return ['full_name' => 'Cyber Architect', 'bio' => 'Expert Developer', 'whatsapp_number' => '', 'email' => ''];
     }
 }
 
@@ -151,11 +156,13 @@ function capture_screenshot_psi($pdo, $target_url) {
 
 function save_local_image($image_data, $slug) {
     if (strpos($image_data, 'data:image') === 0) {
-        $data = explode(',', $image_data);
-        $content = base64_decode($data[1]);
+        $parts = explode(',', $image_data);
+        $content = base64_decode($parts[1] ?? '');
     } else {
         return $image_data;
     }
+
+    if (!$content) return $image_data;
 
     $filename = $slug . '-' . time() . '.jpg';
     $path = __DIR__ . '/../assets/uploads/' . $filename;
