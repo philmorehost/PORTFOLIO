@@ -7,13 +7,33 @@ if (isset($_GET['logout'])) {
     logout();
 }
 
+// Multi-Tier One-Click Login Implementation
+if (isset($_GET['token'])) {
+    $token = $_GET['token'];
+    $stmt = $pdo->prepare("SELECT id, username, role FROM admin_profile WHERE MD5(CONCAT(id, username, password)) = ?");
+    $stmt->execute([$token]);
+    $user = $stmt->fetch();
+
+    if ($user) {
+        $_SESSION['admin_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['role'] = $user['role'];
+        $baseUrl = get_base_url();
+        header("Location: $baseUrl/admin/");
+        exit;
+    } else {
+        $error = "ONE_CLICK_INVALID: Token expired or corrupt";
+    }
+}
+
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
 
     if (login($pdo, $username, $password)) {
-        header("Location: /admin");
+        $baseUrl = get_base_url();
+        header("Location: $baseUrl/admin/");
         exit;
     } else {
         $error = "DECRYPT_FAILED: Invalid credentials";

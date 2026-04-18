@@ -11,6 +11,8 @@ $project = $stmt->fetch();
 if (!$project) { header("Location: /"); exit; }
 
 $tech = json_decode($project['tech_stack'], true) ?? [];
+$gallery = json_decode($project['gallery'], true) ?? [];
+$demoAccess = json_decode($project['demo_access'], true) ?? [];
 $perf = json_decode($project['performance_scores'], true) ?? ['security' => 98, 'ui_ux' => 95, 'scalability' => 90];
 $seo = json_decode($project['seo_tags'], true) ?? [];
 $profile = get_admin_profile($pdo);
@@ -91,6 +93,19 @@ $baseUrl = get_base_url();
                             </span>
                         <?php endforeach; ?>
                     </div>
+
+                    <?php if (!empty($gallery)): ?>
+                    <div class="space-y-6 pt-6">
+                        <h3 class="text-[10px] font-black uppercase text-white/40 tracking-[0.4em]">Visual_Manifest</h3>
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                            <?php foreach ($gallery as $img): ?>
+                                <div class="aspect-square rounded-2xl overflow-hidden border border-white/10 hover:border-sharp-orange transition-all cursor-zoom-in" onclick="viewImage('<?php echo $img; ?>')">
+                                    <img src="<?php echo $img; ?>" class="w-full h-full object-cover">
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="space-y-10">
@@ -118,6 +133,32 @@ $baseUrl = get_base_url();
                         </div>
                     </div>
 
+                    <?php if (!empty($demoAccess['l0']) || !empty($demoAccess['l1']) || !empty($demoAccess['l2'])): ?>
+                    <div class="bg-white/5 border border-white/10 p-10 rounded-[2.5rem] space-y-6 shadow-xl">
+                        <h3 class="text-[11px] font-black uppercase tracking-[0.5em] text-sharp-orange flex items-center gap-3"><i data-lucide="shield-check" class="w-5 h-5"></i> Demo_Access</h3>
+                        <div class="flex flex-col gap-3">
+                            <?php if (!empty($demoAccess['l0'])): ?>
+                                <a href="<?php echo e($demoAccess['l0']); ?>" target="_blank" class="flex items-center justify-between p-4 bg-black/60 border border-white/10 rounded-xl hover:border-sharp-orange transition-all group">
+                                    <span class="text-[10px] font-black uppercase tracking-widest">Level 0: Super Admin</span>
+                                    <i data-lucide="external-link" class="w-4 h-4 text-sharp-orange group-hover:scale-110 transition-transform"></i>
+                                </a>
+                            <?php endif; ?>
+                            <?php if (!empty($demoAccess['l1'])): ?>
+                                <a href="<?php echo e($demoAccess['l1']); ?>" target="_blank" class="flex items-center justify-between p-4 bg-black/60 border border-white/10 rounded-xl hover:border-sharp-orange transition-all group">
+                                    <span class="text-[10px] font-black uppercase tracking-widest">Level 1: Restricted</span>
+                                    <i data-lucide="external-link" class="w-4 h-4 text-sharp-orange group-hover:scale-110 transition-transform"></i>
+                                </a>
+                            <?php endif; ?>
+                            <?php if (!empty($demoAccess['l2'])): ?>
+                                <a href="<?php echo e($demoAccess['l2']); ?>" target="_blank" class="flex items-center justify-between p-4 bg-black/60 border border-white/10 rounded-xl hover:border-sharp-orange transition-all group">
+                                    <span class="text-[10px] font-black uppercase tracking-widest">Level 2: Standard</span>
+                                    <i data-lucide="external-link" class="w-4 h-4 text-sharp-orange group-hover:scale-110 transition-transform"></i>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
                     <a href="https://wa.me/<?php echo e($waNumber); ?>?text=<?php echo urlencode($project['wa_custom_message']); ?>" target="_blank" class="block w-full py-6 bg-sharp-orange text-black font-black rounded-[1.5rem] uppercase tracking-[0.3em] text-[12px] text-center shadow-[0_0_40px_rgba(255,102,0,0.4)] hover:scale-[1.02] active:scale-95 transition-all">Establish_Connection</a>
                 </div>
             </div>
@@ -141,8 +182,27 @@ $baseUrl = get_base_url();
         </div>
     </div>
 
+    <div id="imageModal" class="fixed inset-0 z-[110] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-6 opacity-0 pointer-events-none transition-all duration-500" onclick="closeImage()">
+        <img id="modalImg" class="max-w-full max-h-full rounded-2xl shadow-2xl scale-95 transition-transform duration-500">
+    </div>
+
     <script>
         lucide.createIcons();
+
+        function viewImage(src) {
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('modalImg');
+            img.src = src;
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => img.classList.remove('scale-95'), 10);
+        }
+
+        function closeImage() {
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('modalImg');
+            img.classList.add('scale-95');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }
 
         function openVault() {
             const modal = document.getElementById('vaultModal');

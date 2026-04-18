@@ -5,8 +5,25 @@ function e($string) {
 }
 
 function get_base_url() {
-    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
-    return $protocol . "://" . $_SERVER['HTTP_HOST'];
+    // Determine the root directory relative to DOCUMENT_ROOT
+    $script_name = $_SERVER['SCRIPT_NAME'] ?? '';
+    $root = str_replace('\\', '/', dirname($script_name));
+    if ($root === '/' || $root === '\\') {
+        $root = '';
+    }
+
+    // Check if we are in a subdirectory like /admin or /install
+    if (strpos($root, '/admin') !== false) {
+        $root = substr($root, 0, strpos($root, '/admin'));
+    } elseif (strpos($root, '/install') !== false) {
+        $root = substr($root, 0, strpos($root, '/install'));
+    } elseif (strpos($root, '/includes') !== false) {
+        $root = substr($root, 0, strpos($root, '/includes'));
+    }
+
+    $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    return rtrim($protocol . "://" . $host . $root, '/');
 }
 
 function generate_csrf_token() {

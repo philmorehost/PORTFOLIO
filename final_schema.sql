@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS `admin_profile` (
     `password` VARCHAR(255) NOT NULL,
     `email` VARCHAR(100),
     `full_name` VARCHAR(100),
+    `role` INT DEFAULT 0, -- 0: Super, 1: Restricted, 2: Standard
+    `legacy_notes` TEXT, -- Security PINs/Answers
     `bio` TEXT,
     `whatsapp_number` VARCHAR(20),
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -37,6 +39,8 @@ CREATE TABLE IF NOT EXISTS `projects` (
     `wa_custom_message` TEXT,
     `performance_scores` JSON, -- Tech Pulse Card
     `code_snippet` TEXT, -- The Vault
+    `gallery` JSON, -- Up to 5 images (Base64)
+    `demo_access` JSON, -- Multi-Tier Demo Access (URLs/Creds)
     `is_pinned` TINYINT(1) DEFAULT 0,
     `inquiries_count` INT DEFAULT 0,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

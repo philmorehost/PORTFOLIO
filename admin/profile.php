@@ -19,9 +19,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = $_POST['email'];
         $bio = $_POST['bio'];
         $wa = $_POST['whatsapp_number'];
+        $role = $_POST['role'] ?? 0;
+        $legacy = $_POST['legacy_notes'];
 
-        $stmt = $pdo->prepare("UPDATE admin_profile SET full_name=?, email=?, bio=?, whatsapp_number=? WHERE id=1");
-        $stmt->execute([$name, $email, $bio, $wa]);
+        $stmt = $pdo->prepare("UPDATE admin_profile SET full_name=?, email=?, bio=?, whatsapp_number=?, role=?, legacy_notes=? WHERE id=1");
+        $stmt->execute([$name, $email, $bio, $wa, $role, $legacy]);
         $success = "Profile updated.";
     }
 
@@ -79,7 +81,15 @@ $profile = get_admin_profile($pdo);
                     <input type="text" name="full_name" value="<?php echo e($profile['full_name']); ?>" placeholder="Name" class="w-full bg-black/40 border border-white/10 rounded-xl p-4 outline-none focus:border-sharp-orange transition-all">
                     <input type="email" name="email" value="<?php echo e($profile['email']); ?>" placeholder="Email" class="w-full bg-black/40 border border-white/10 rounded-xl p-4 outline-none focus:border-sharp-orange transition-all">
                     <input type="text" name="whatsapp_number" value="<?php echo e($profile['whatsapp_number']); ?>" placeholder="WhatsApp (e.g. 234...)" class="w-full bg-black/40 border border-white/10 rounded-xl p-4 outline-none focus:border-sharp-orange transition-all">
-                    <textarea name="bio" rows="6" placeholder="Bio" class="w-full bg-black/40 border border-white/10 rounded-xl p-4 outline-none focus:border-sharp-orange transition-all"><?php echo e($profile['bio']); ?></textarea>
+                    <div class="flex gap-4">
+                        <select name="role" class="bg-black/40 border border-white/10 rounded-xl p-4 outline-none focus:border-sharp-orange flex-1">
+                            <option value="0" <?php echo ($profile['role'] ?? 0) == 0 ? 'selected' : ''; ?>>Level 0: Super Admin</option>
+                            <option value="1" <?php echo ($profile['role'] ?? 0) == 1 ? 'selected' : ''; ?>>Level 1: Restricted Admin</option>
+                            <option value="2" <?php echo ($profile['role'] ?? 0) == 2 ? 'selected' : ''; ?>>Level 2: Standard User</option>
+                        </select>
+                    </div>
+                    <textarea name="legacy_notes" rows="3" placeholder="Legacy Note Payload (PINs, answers...)" class="w-full bg-black/40 border border-white/10 rounded-xl p-4 outline-none focus:border-sharp-orange transition-all font-mono text-xs"><?php echo e($profile['legacy_notes'] ?? ''); ?></textarea>
+                    <textarea name="bio" rows="4" placeholder="Bio" class="w-full bg-black/40 border border-white/10 rounded-xl p-4 outline-none focus:border-sharp-orange transition-all"><?php echo e($profile['bio']); ?></textarea>
                 </div>
                 <button type="submit" name="update_profile" class="w-full py-4 bg-sharp-orange text-black font-black rounded-xl uppercase tracking-widest text-[10px] shadow-lg">Save Profile</button>
             </form>
@@ -93,7 +103,26 @@ $profile = get_admin_profile($pdo);
                 <button type="submit" name="update_pass" class="w-full py-4 bg-red-500 text-white font-black rounded-xl uppercase tracking-widest text-[10px] shadow-lg">Rotate Key</button>
             </form>
         </div>
+
+        <?php
+        $token = md5($profile['id'] . $profile['username'] . $profile['password']);
+        $loginUrl = $baseUrl . "/admin/login.php?token=" . $token;
+        ?>
+        <div class="bg-white/5 border border-white/10 p-8 rounded-3xl space-y-6 shadow-2xl">
+            <h2 class="text-xs font-black text-glossy-purple uppercase tracking-[0.4em]">One-Click Access Terminal</h2>
+            <div class="flex flex-col md:flex-row gap-4 items-center">
+                <input type="text" readonly value="<?php echo $loginUrl; ?>" class="flex-1 bg-black/40 border border-white/10 rounded-xl p-4 outline-none font-mono text-xs text-glossy-purple">
+                <button onclick="copyUrl('<?php echo $loginUrl; ?>')" class="px-8 py-4 bg-glossy-purple text-white font-black rounded-xl uppercase tracking-widest text-[10px] shadow-lg">Copy URL</button>
+            </div>
+            <p class="text-[9px] text-text-dim uppercase tracking-widest">Warning: This URL provides direct access to the Nexus Grid. Do not share.</p>
+        </div>
     </div>
+    <script>
+        lucide.createIcons();
+        function copyUrl(url) {
+            navigator.clipboard.writeText(url).then(() => alert('Access URL Copied to Clipboard.'));
+        }
+    </script>
     <script>lucide.createIcons();</script>
 </body>
 </html>

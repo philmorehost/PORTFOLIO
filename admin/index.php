@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['switch_provider'])) {
         $stmt = $pdo->prepare("UPDATE api_settings SET provider=? WHERE id=1");
         $stmt->execute([$_POST['provider']]);
-        header("Location: " . $_SERVER['PHP_SELF']);
+        header("Location: " . $baseUrl . "/admin/");
         exit;
     }
 
@@ -34,6 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $wa_custom_message = $_POST['wa_custom_message'];
         $perf = $_POST['performance_scores'];
         $code = $_POST['code_snippet'];
+        $gallery = $_POST['gallery']; // JSON string of Base64
+        $demo_access = $_POST['demo_access']; // JSON string
         $is_pinned = isset($_POST['is_pinned']) ? 1 : 0;
 
         if (strpos($screenshot_path, 'data:image') === 0) {
@@ -41,11 +43,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($id) {
-            $stmt = $pdo->prepare("UPDATE projects SET title=?, slug=?, category=?, description=?, screenshot_path=?, demo_link=?, tech_stack=?, seo_tags=?, wa_custom_message=?, performance_scores=?, code_snippet=?, is_pinned=? WHERE id=?");
-            $stmt->execute([$title, $slug, $category, $description, $screenshot_path, $demo_link, $tech_stack, $seo_tags, $wa_custom_message, $perf, $code, $is_pinned, $id]);
+            $stmt = $pdo->prepare("UPDATE projects SET title=?, slug=?, category=?, description=?, screenshot_path=?, demo_link=?, tech_stack=?, seo_tags=?, wa_custom_message=?, performance_scores=?, code_snippet=?, gallery=?, demo_access=?, is_pinned=? WHERE id=?");
+            $stmt->execute([$title, $slug, $category, $description, $screenshot_path, $demo_link, $tech_stack, $seo_tags, $wa_custom_message, $perf, $code, $gallery, $demo_access, $is_pinned, $id]);
         } else {
-            $stmt = $pdo->prepare("INSERT INTO projects (title, slug, category, description, screenshot_path, demo_link, tech_stack, seo_tags, wa_custom_message, performance_scores, code_snippet, is_pinned) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$title, $slug, $category, $description, $screenshot_path, $demo_link, $tech_stack, $seo_tags, $wa_custom_message, $perf, $code, $is_pinned]);
+            $stmt = $pdo->prepare("INSERT INTO projects (title, slug, category, description, screenshot_path, demo_link, tech_stack, seo_tags, wa_custom_message, performance_scores, code_snippet, gallery, demo_access, is_pinned) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$title, $slug, $category, $description, $screenshot_path, $demo_link, $tech_stack, $seo_tags, $wa_custom_message, $perf, $code, $gallery, $demo_access, $is_pinned]);
         }
     }
 
@@ -160,6 +162,27 @@ $projects = $stmt->fetchAll();
 
                     <textarea name="code_snippet" id="projectCode" rows="6" placeholder="// Ghost Architecture Code..." class="w-full bg-black/60 border border-white/10 rounded-2xl p-5 outline-none focus:border-sharp-orange font-mono text-xs leading-relaxed text-white/80"></textarea>
 
+                    <div class="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
+                        <h3 class="text-[10px] font-black uppercase text-sharp-orange tracking-[0.3em]">Multi-Tier Demo Access</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <input type="text" id="demoL0" placeholder="L0: Super (URL)" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-sharp-orange">
+                            <input type="text" id="demoL1" placeholder="L1: Restricted (URL)" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-sharp-orange">
+                            <input type="text" id="demoL2" placeholder="L2: Standard (URL)" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-sharp-orange">
+                        </div>
+                        <input type="hidden" name="demo_access" id="projectDemoAccess" value='{}'>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h3 class="text-[10px] font-black uppercase text-glossy-purple tracking-[0.3em]">Project Gallery (Max 5)</h3>
+                        <div id="galleryDropzone" class="border-2 border-dashed border-white/10 rounded-2xl p-8 text-center hover:border-glossy-purple transition-all cursor-pointer bg-white/5">
+                            <i data-lucide="image-plus" class="w-8 h-8 mx-auto mb-3 text-text-dim"></i>
+                            <p class="text-[10px] text-text-dim font-black uppercase">Drag & Drop Images or Click to Upload</p>
+                            <input type="file" id="galleryInput" multiple accept="image/*" class="hidden">
+                        </div>
+                        <div id="galleryPreview" class="flex flex-wrap gap-4 pt-4"></div>
+                        <input type="hidden" name="gallery" id="projectGallery" value='[]'>
+                    </div>
+
                     <div class="flex flex-col sm:flex-row items-center justify-between gap-6 pt-10 border-t border-white/5">
                         <div class="flex items-center gap-8">
                             <label class="flex items-center gap-3 cursor-pointer group">
@@ -243,6 +266,15 @@ $projects = $stmt->fetchAll();
             lucide.createIcons();
         }
 
+        document.getElementById('projectForm').onsubmit = function() {
+            const demo = {
+                l0: document.getElementById('demoL0').value,
+                l1: document.getElementById('demoL1').value,
+                l2: document.getElementById('demoL2').value
+            };
+            document.getElementById('projectDemoAccess').value = JSON.stringify(demo);
+        };
+
         async function triggerCapture() {
             const url = document.getElementById('targetUrl').value;
             if (!url) return alert('Enter target URL');
@@ -306,6 +338,16 @@ $projects = $stmt->fetchAll();
             document.getElementById('projectWa').value = proj.wa_custom_message;
             document.getElementById('projectSlug').value = proj.slug;
             document.getElementById('projectPinned').checked = proj.is_pinned == 1;
+
+            galleryItems = JSON.parse(proj.gallery || '[]');
+            renderGallery();
+
+            const demo = JSON.parse(proj.demo_access || '{}');
+            document.getElementById('demoL0').value = demo.l0 || '';
+            document.getElementById('demoL1').value = demo.l1 || '';
+            document.getElementById('demoL2').value = demo.l2 || '';
+            document.getElementById('projectDemoAccess').value = proj.demo_access || '{}';
+
             if (proj.screenshot_path) {
                 document.getElementById('thumbPreview').src = '<?php echo $baseUrl; ?>' + proj.screenshot_path;
                 document.getElementById('previewArea').classList.remove('hidden');
@@ -317,8 +359,67 @@ $projects = $stmt->fetchAll();
             document.getElementById('projectForm').reset();
             document.getElementById('projectId').value = '';
             document.getElementById('projectThumb').value = '';
+            document.getElementById('projectGallery').value = '[]';
+            document.getElementById('galleryPreview').innerHTML = '';
+            document.getElementById('projectDemoAccess').value = '{}';
+            document.getElementById('demoL0').value = '';
+            document.getElementById('demoL1').value = '';
+            document.getElementById('demoL2').value = '';
             document.getElementById('previewArea').classList.add('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Gallery Logic
+        const dropzone = document.getElementById('galleryDropzone');
+        const galleryInput = document.getElementById('galleryInput');
+        const galleryPreview = document.getElementById('galleryPreview');
+        const projectGallery = document.getElementById('projectGallery');
+        let galleryItems = [];
+
+        dropzone.onclick = () => galleryInput.click();
+
+        galleryInput.onchange = (e) => handleFiles(e.target.files);
+
+        dropzone.ondragover = (e) => { e.preventDefault(); dropzone.classList.add('border-glossy-purple'); };
+        dropzone.ondragleave = () => dropzone.classList.remove('border-glossy-purple');
+        dropzone.ondrop = (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('border-glossy-purple');
+            handleFiles(e.dataTransfer.files);
+        };
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (galleryItems.length >= 5) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    galleryItems.push(e.target.result);
+                    renderGallery();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderGallery() {
+            galleryPreview.innerHTML = '';
+            galleryItems.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'relative w-24 h-24 rounded-xl overflow-hidden border border-white/10 group';
+                div.innerHTML = `
+                    <img src="${item}" class="w-full h-full object-cover">
+                    <button type="button" onclick="removeGalleryItem(${idx})" class="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                `;
+                galleryPreview.appendChild(div);
+            });
+            projectGallery.value = JSON.stringify(galleryItems);
+            lucide.createIcons();
+        }
+
+        function removeGalleryItem(idx) {
+            galleryItems.splice(idx, 1);
+            renderGallery();
         }
     </script>
 </body>
