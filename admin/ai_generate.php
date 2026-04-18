@@ -10,22 +10,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = $_POST['title'] ?? '';
 
     $prompt = "
-    Perform a deep-scan and analysis of the provided URL to extract its core value proposition, technical architecture, and visual identity.
-    Target URL: $url
-    Title Context: $title
+    Perform a deep-scan analysis of $url.
+    Context: $title
 
-    The response must be a JSON object containing:
-    1. content: A 'Power Pitch' following Problem -> Solution -> Result, Markdown format, 2-3 paragraphs.
-    2. metaTitle: SEO title (max 60 chars).
-    3. metaDescription: SEO description (max 160 chars).
-    4. keywords: Array of 5-8 strings.
-    5. techStack: Array of objects with name (e.g. React).
-    6. waMessage: Professional WhatsApp message.
+    Return a JSON object:
+    {
+      \"content\": \"2-3 paragraph markdown power pitch\",
+      \"metaTitle\": \"SEO title\",
+      \"metaDescription\": \"SEO description\",
+      \"keywords\": [\"array\", \"of\", \"strings\"],
+      \"techStack\": [{\"name\": \"React\"}],
+      \"waMessage\": \"WhatsApp text\",
+      \"performance_scores\": {\"security\": 98, \"ui_ux\": 95, \"scalability\": 90},
+      \"code_snippet\": \"Code snippet or system architecture note\"
+    }
     ";
 
-    $result = call_gemini_api($prompt);
+    $result = call_ai_service($pdo, $prompt);
 
-    // Ensure we return a proper JSON response even on error for the frontend to handle
     if (isset($result['error'])) {
         header('Content-Type: application/json', true, 400);
         echo json_encode(['error' => $result['error']]);

@@ -4,27 +4,16 @@ require_once 'includes/functions.php';
 require_once 'includes/auth.php';
 
 $slug = $_GET['slug'] ?? '';
-
 $stmt = $pdo->prepare("SELECT * FROM projects WHERE slug = ?");
 $stmt->execute([$slug]);
 $project = $stmt->fetch();
 
-if (!$project) {
-    header("Location: /");
-    exit;
-}
+if (!$project) { header("Location: /"); exit; }
 
 $seo = json_decode($project['seo_data'], true);
 $tech = json_decode($project['tech_stack'], true);
-$gallery = json_decode($project['gallery_images'], true) ?? [];
-$access = json_decode($project['access_points'], true) ?? [];
-$demo = json_decode($project['demo_login'], true) ?? [];
-$perf = json_decode($project['performance'], true) ?? ['speed' => 95, 'security' => 98];
-
-$appTitle = get_setting($pdo, 'appTitle', 'CYBER-PULSE');
+$perf = json_decode($project['performance_scores'], true) ?? ['security' => 98, 'ui_ux' => 95, 'scalability' => 90];
 $waNumber = get_setting($pdo, 'waNumber', '2348123456789');
-$titleParts = explode('-', $appTitle);
-$mainTitle = trim($titleParts[0]);
 
 ?>
 <!DOCTYPE html>
@@ -32,7 +21,7 @@ $mainTitle = trim($titleParts[0]);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo e($project['title']); ?> | <?php echo e($appTitle); ?></title>
+    <title><?php echo e($project['title']); ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -48,137 +37,82 @@ $mainTitle = trim($titleParts[0]);
             }
         }
     </script>
-    <link rel="stylesheet" href="/assets/css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/inter-ui/3.19.3/inter.css">
+    <link rel="stylesheet" href="/assets/css/theme.css">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/@barba/core"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
 <body class="bg-pitch-black text-white" data-barba="wrapper">
 
-    <nav class="flex items-center justify-between px-4 md:px-10 py-6 border-b border-white/10 sticky top-0 bg-pitch-black/80 backdrop-blur-md z-50">
+    <nav id="main-nav" class="flex items-center justify-between px-4 md:px-10 py-6 border-b border-white/10 sticky top-0 bg-pitch-black/80 backdrop-blur-md z-50">
         <a href="/" class="flex items-center gap-2">
             <div class="w-8 h-8 bg-sharp-orange rounded-lg flex items-center justify-center font-black italic text-black">P</div>
-            <span class="text-xl font-black italic tracking-tighter uppercase"><?php echo e($mainTitle); ?></span>
+            <span class="text-xl font-black italic tracking-tighter uppercase"><?php echo strtoupper(explode('-', get_setting($pdo, 'appTitle', 'CYBER-PULSE'))[0]); ?></span>
         </a>
-        <div class="flex items-center gap-6">
-            <div class="flex items-center gap-2 text-[10px] font-mono text-text-dim uppercase tracking-[2px]">
-                <span class="w-2 h-2 rounded-full bg-sharp-orange animate-pulse"></span>
-                Node_Detail_View
-            </div>
+        <div class="text-[10px] font-mono text-text-dim uppercase tracking-widest hidden md:block">
+            NODE_ACTIVE: <?php echo e($project['title']); ?> // DEEPSEEK_V3_SYNC
         </div>
     </nav>
 
-    <main data-barba="container" data-barba-namespace="project" class="px-4 md:px-10 py-5">
-        <div class="space-y-8 pb-20 mt-4">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 h-auto">
-                <div class="space-y-2">
-                    <a href="/" class="inline-flex items-center gap-2 text-[11px] font-mono text-text-dim hover:text-sharp-orange transition-colors uppercase tracking-[0.2em]">
-                        <i data-lucide="arrow-left" class="w-3 h-3"></i> Back to Grid
-                    </a>
-                    <div class="flex items-center gap-4">
-                        <h1 class="text-4xl md:text-5xl font-black italic tracking-tighter uppercase whitespace-nowrap">
-                            <?php echo e($project['title']); ?>
-                        </h1>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <div class="px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 border <?php echo $project['type'] === 'web' ? 'border-sharp-orange/20 text-sharp-orange' : 'border-glossy-purple/20 text-glossy-purple'; ?>">
-                            <i data-lucide="<?php echo $project['type'] === 'web' ? 'globe' : 'smartphone'; ?>" class="w-3 h-3"></i>
-                            <?php echo $project['type'] === 'web' ? 'Web Solution' : 'App Engineering'; ?>
-                        </div>
-                    </div>
-                </div>
-                <div class="text-[11px] text-text-dim font-mono hidden md:block">
-                    CODEX_ID: PB_<?php echo strtoupper(substr($project['slug'], 0, 4)); ?> // LATENCY: 24ms // ENCRYPTION: AES-256
-                </div>
+    <main data-barba="container" data-barba-namespace="project" class="px-4 md:px-10 py-10 min-h-screen">
+        <div class="max-w-7xl mx-auto space-y-12">
+            <div class="flex items-center gap-4">
+                <a href="/" class="p-2 rounded-full bg-white/5 border border-white/10 text-text-dim hover:text-sharp-orange transition-all"><i data-lucide="arrow-left" class="w-5 h-5"></i></a>
+                <h1 class="text-4xl md:text-6xl font-black italic uppercase tracking-tighter text-glow-orange"><?php echo e($project['title']); ?></h1>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-[20px]">
-                <!-- Left: Preview -->
-                <div class="flex flex-col bg-white/5 border border-white/10 rounded-[12px] overflow-hidden">
-                    <div class="h-[40px] border-b border-white/10 px-[15px] flex items-center justify-between">
-                        <div class="flex items-center gap-[8px]">
-                            <div class="w-2 h-2 rounded-full bg-white/20"></div>
-                            <div class="w-2 h-2 rounded-full bg-white/20"></div>
-                            <div class="w-2 h-2 rounded-full bg-white/20"></div>
-                            <div class="ml-5 text-[11px] font-mono text-text-dim truncate max-w-[200px] md:max-w-md"><?php echo e($project['url']); ?></div>
+            <div class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
+                <!-- Project Preview -->
+                <div class="space-y-8">
+                    <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden aspect-video relative group">
+                        <iframe src="<?php echo e($project['url']); ?>" class="w-full h-full border-0" title="Live Preview" loading="lazy"></iframe>
+                        <div class="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="p-2 bg-black/60 rounded border border-white/10 hover:text-sharp-orange transition-colors"><i data-lucide="zoom-in" class="w-4 h-4"></i></button>
+                            <button class="p-2 bg-black/60 rounded border border-white/10 hover:text-sharp-orange transition-colors"><i data-lucide="monitor" class="w-4 h-4"></i></button>
                         </div>
                     </div>
 
-                    <div class="flex-1 bg-[#111] m-[15px] rounded-[4px] border border-white/5 relative overflow-hidden h-[500px] md:h-[700px]">
-                        <iframe src="<?php echo e($project['url']); ?>" class="w-full h-full border-0" title="Preview" loading="lazy"></iframe>
-                    </div>
-                </div>
-
-                <!-- Right: Sidebar -->
-                <div class="flex flex-col gap-[20px]">
-                    <!-- Access Points -->
-                    <?php if (!empty($access)): ?>
-                        <div class="bg-white/5 border border-white/10 p-6 rounded-[12px] space-y-6">
-                            <span class="text-[11px] font-black uppercase tracking-[0.3em] text-sharp-orange flex items-center gap-2">
-                                <i data-lucide="terminal" class="w-3 h-3"></i> One-Click Access Nodes
-                            </span>
-                            <div class="grid grid-cols-1 gap-3">
-                                <?php if (isset($access['superAdmin'])): ?>
-                                    <a href="<?php echo e($access['superAdmin']['directLoginUrl'] ?: $access['superAdmin']['url']); ?>" target="_blank" class="flex items-center justify-between bg-black/40 p-4 rounded-xl border border-white/5 hover:border-sharp-orange transition-all">
-                                        <div class="flex items-center gap-3">
-                                            <i data-lucide="crown" class="w-4 h-4 text-sharp-orange"></i>
-                                            <div class="text-left">
-                                                <div class="text-[10px] font-black text-white uppercase tracking-widest">Level 0: Super Admin</div>
-                                            </div>
-                                        </div>
-                                        <i data-lucide="mouse-pointer-2" class="w-4 h-4 text-text-dim"></i>
-                                    </a>
-                                <?php endif; ?>
+                    <!-- Ghost Code Snippet -->
+                    <?php if ($project['code_snippet']): ?>
+                        <div class="space-y-4">
+                            <h3 class="text-xs font-black uppercase tracking-[0.4em] text-text-dim flex items-center gap-2"><i data-lucide="terminal" class="w-4 h-4 text-sharp-orange"></i> Ghost Code Snippet</h3>
+                            <div class="code-terminal">
+                                <pre class="text-white/80"><code><?php echo e($project['code_snippet']); ?></code></pre>
                             </div>
                         </div>
                     <?php endif; ?>
+                </div>
 
-                    <!-- AI Content -->
-                    <div class="glass-purple p-[24px] rounded-[12px]">
-                        <h2 class="text-[24px] font-bold mb-[8px] tracking-tight"><?php echo e($project['title']); ?></h2>
-                        <div class="text-[14px] leading-[1.6] text-white/80 mb-[20px] font-medium prose prose-invert prose-sm">
+                <!-- Sidebar Insights -->
+                <div class="space-y-8">
+                    <!-- Tech Pulse Scorecard -->
+                    <div class="bg-white/5 border border-white/10 p-8 rounded-2xl space-y-6 glass-purple">
+                        <h3 class="text-xs font-black uppercase tracking-[0.4em] text-glossy-purple flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4"></i> Tech Pulse Scorecard</h3>
+                        <div class="space-y-4">
+                            <?php foreach ($perf as $label => $score): ?>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                                        <span class="text-text-dim"><?php echo str_replace('_', ' ', $label); ?></span>
+                                        <span class="text-glossy-purple"><?php echo $score; ?>%</span>
+                                    </div>
+                                    <div class="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                                        <div class="meter-fill" style="width: <?php echo $score; ?>%"></div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <!-- Article Content -->
+                    <div class="bg-white/5 border border-white/10 p-8 rounded-2xl space-y-4">
+                        <h3 class="text-xs font-black uppercase tracking-[0.4em] text-sharp-orange flex items-center gap-2"><i data-lucide="file-text" class="w-4 h-4"></i> Power Pitch</h3>
+                        <div class="prose prose-invert prose-sm leading-relaxed text-white/70 italic">
                             <?php echo nl2br(e($project['content'])); ?>
                         </div>
-                        <div class="flex flex-wrap gap-[8px]">
-                            <?php if (!empty($tech)): ?>
-                                <?php foreach ($tech as $t): ?>
-                                    <span class="font-mono text-[11px] px-[10px] py-[4px] bg-glossy-purple/20 border border-glossy-purple rounded-[4px] text-[#E0A0FF]">
-                                        <?php echo e($t['name']); ?>
-                                    </span>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </div>
                     </div>
 
-                    <!-- Stats -->
-                    <div class="grid grid-cols-2 gap-[15px]">
-                        <div class="bg-white/5 border border-white/10 p-[15px] rounded-[8px]">
-                            <div class="text-[10px] uppercase text-text-dim mb-[5px] font-bold tracking-wider">Pulse</div>
-                            <div class="text-[18px] font-bold font-mono text-glow-orange"><?php echo e($project['inquiries_count']); ?></div>
-                        </div>
-                        <div class="bg-white/5 border border-white/10 p-[15px] rounded-[8px]">
-                            <div class="text-[10px] uppercase text-text-dim mb-[5px] font-bold tracking-wider">Status</div>
-                            <div class="text-[18px] font-bold font-mono text-[#00FF00]">LIVE</div>
-                        </div>
-                    </div>
-
-                    <!-- Performance -->
-                    <div class="bg-white/5 border border-white/10 rounded-[12px] p-[20px] glass-purple">
-                        <div class="flex justify-between items-end mb-4">
-                            <span class="text-[10px] uppercase text-text-dim font-bold tracking-widest">Live Performance Node</span>
-                            <span class="text-[24px] font-black font-mono text-glossy-purple"><?php echo $perf['speed']; ?>%</span>
-                        </div>
-                        <div class="h-[6px] w-full bg-white/10 rounded-full overflow-hidden">
-                            <div class="meter-fill" style="width: <?php echo $perf['speed']; ?>%"></div>
-                        </div>
-                    </div>
-
-                    <!-- WhatsApp CTA -->
-                    <a href="https://wa.me/<?php echo e($waNumber); ?>?text=<?php echo urlencode($project['wa_message']); ?>" target="_blank" class="w-full bg-sharp-orange text-black py-[18px] rounded-[8px] font-extrabold text-[14px] uppercase tracking-[1px] flex items-center justify-center gap-[10px]">
-                        <i data-lucide="message-square" class="w-5 h-5"></i>
-                        Get <?php echo $project['type'] === 'web' ? 'Site' : 'App'; ?> Like This
-                    </a>
+                    <!-- CTA -->
+                    <a href="https://wa.me/<?php echo e($waNumber); ?>?text=<?php echo urlencode($project['wa_message']); ?>" target="_blank" class="block w-full py-5 bg-sharp-orange text-black font-black rounded-xl uppercase tracking-widest text-sm text-center shadow-[0_0_30px_rgba(255,102,0,0.3)] hover:scale-[1.02] transition-all">Get Solution Like This</a>
                 </div>
             </div>
         </div>
@@ -186,13 +120,10 @@ $mainTitle = trim($titleParts[0]);
 
     <script>
         lucide.createIcons();
-
         barba.init({
             transitions: [{
-                name: 'opacity-transition',
-                leave(data) {
-                    return gsap.to(data.current.container, { opacity: 0, y: 10 });
-                },
+                name: 'fade',
+                leave(data) { return gsap.to(data.current.container, { opacity: 0, y: 10 }); },
                 enter(data) {
                     lucide.createIcons();
                     window.scrollTo(0, 0);

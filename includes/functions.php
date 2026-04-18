@@ -15,45 +15,100 @@ function verify_csrf_token($token) {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
 
-function call_gemini_api($prompt) {
-    $api_key = GEMINI_API_KEY;
-    $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" . $api_key;
-
-    $data = [
-        "contents" => [
-            ["parts" => [["text" => $prompt]]]
-        ],
-        "generationConfig" => [
-            "response_mime_type" => "application/json"
-        ]
-    ];
-
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-
-    $response = curl_exec($ch);
-    $error = curl_error($ch);
-    curl_close($ch);
-
-    if ($error) return ['error' => $error];
-
-    $result = json_decode($response, true);
-    if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
-        return json_decode($result['candidates'][0]['content']['parts'][0]['text'], true);
-    }
-
-    if (isset($result['error'])) {
-        return ['error' => $result['error']['message'] ?? 'Gemini API Error'];
-    }
-
-    return ['error' => 'Invalid API response', 'raw' => $response];
+function log_api_call($pdo, $provider, $endpoint, $status, $response_time) {
+    $stmt = $pdo->prepare("INSERT INTO api_logs (provider, endpoint, status, response_time) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$provider, $endpoint, $status, $response_time]);
 }
 
-function capture_screenshot_psi($target_url) {
-    $api_key = defined('GEMINI_API_KEY') ? GEMINI_API_KEY : '';
+function call_ai_service($pdo, $prompt) {
+    $provider = get_setting($pdo, 'active_ai_provider', 'gemini');
+
+    if ($provider === 'manual') {
+        return ['error' => 'Manual mode active'];
+    }
+
+    $start_time = microtime(true);
+
+    if ($provider === 'deepseek') {
+        $api_key = get_setting($pdo, 'deepseek_api_key', '');
+        $base_url = get_setting($pdo, 'deepseek_base_url', 'https://api.deepseek.com');
+        $endpoint = "/chat/completions";
+
+        $data = [
+            "model" => "deepseek-chat",
+            "messages" => [
+                ["role" => "system", "content" => "You are a specialized developer portfolio assistant. Always return valid JSON."],
+                ["role" => "user", "content" => $prompt]
+            ],
+            "response_format" => ["type" => "json_object"]
+        ];
+
+        $ch = curl_init($base_url . $endpoint);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $api_key
+        ]);
+
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $duration = (microtime(true) - $start_time) * 1000;
+
+        if ($http_code !== 200) {
+            log_api_call($pdo, 'deepseek', $endpoint, 'fail', $duration);
+            return ['error' => 'DeepSeek API error: ' . $response];
+        }
+
+        log_api_call($pdo, 'deepseek', $endpoint, 'success', $duration);
+        $result = json_decode($response, true);
+        return json_decode($result['choices'][0]['message']['content'], true);
+
+    } else {
+        // Default to Gemini
+        $api_key = get_setting($pdo, 'gemini_api_key', '');
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" . $api_key;
+
+        $data = [
+            "contents" => [
+                ["parts" => [["text" => $prompt]]]
+            ],
+            "generationConfig" => [
+                "response_mime_type" => "application/json"
+            ]
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $duration = (microtime(true) - $start_time) * 1000;
+
+        if ($http_code !== 200) {
+            log_api_call($pdo, 'gemini', 'generateContent', 'fail', $duration);
+            return ['error' => 'Gemini API Error: ' . $response];
+        }
+
+        log_api_call($pdo, 'gemini', 'generateContent', 'success', $duration);
+        $result = json_decode($response, true);
+        if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
+            return json_decode($result['candidates'][0]['content']['parts'][0]['text'], true);
+        }
+        return ['error' => 'Invalid Gemini response'];
+    }
+}
+
+function capture_screenshot_psi($pdo, $target_url) {
+    $api_key = get_setting($pdo, 'google_psi_key', '');
     $psi_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=" . urlencode($target_url) . "&screenshot=true";
     if ($api_key) $psi_url .= "&key=" . $api_key;
 
@@ -75,8 +130,6 @@ function save_local_image($image_data, $slug) {
         $data = explode(',', $image_data);
         $content = base64_decode($data[1]);
     } else {
-        // Assume it's a URL or already decoded?
-        // For PSI it's a data URL.
         return $image_data;
     }
 

@@ -3,12 +3,6 @@ session_start();
 
 $config_file = '../includes/config.php';
 
-if (file_exists($config_file)) {
-    // Optionally check if DB is already set up, but for now let's just say if config exists, don't allow install
-    // unless a specific flag is set.
-    // die("Application already installed. Delete /install or config.php to restart.");
-}
-
 $step = isset($_GET['step']) ? (int)$_GET['step'] : 1;
 $error = '';
 
@@ -37,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($step == 3) {
         $admin_user = $_POST['admin_user'];
         $admin_pass = $_POST['admin_pass'];
+        $deepseek_key = $_POST['deepseek_key'];
         $gemini_key = $_POST['gemini_key'];
 
         if (empty($admin_user) || empty($admin_pass)) {
@@ -47,14 +42,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdo = new PDO("mysql:host={$db['host']};dbname={$db['name']}", $db['user'], $db['pass']);
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-                // Run schema
-                $schema = file_get_contents('../schema.sql');
-                $pdo->exec($schema);
+                // Run Full Schema
+                $schema = file_get_contents('../full_schema.sql');
+                $queries = explode(';', $schema);
+                foreach ($queries as $q) {
+                    if (trim($q)) $pdo->exec($q);
+                }
 
                 // Create Admin
                 $hashed_pass = password_hash($admin_pass, PASSWORD_DEFAULT);
                 $stmt = $pdo->prepare("INSERT INTO admins (username, password) VALUES (?, ?)");
                 $stmt->execute([$admin_user, $hashed_pass]);
+
+                // Initial Settings
+                $stmt = $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?)");
+                $stmt->execute(['deepseek_api_key', $deepseek_key]);
+                $stmt->execute(['gemini_api_key', $gemini_key]);
+                $stmt->execute(['active_ai_provider', 'gemini']);
 
                 // Save Config
                 $config_content = "<?php\n";
@@ -62,7 +66,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $config_content .= "define('DB_NAME', '" . addslashes($db['name']) . "');\n";
                 $config_content .= "define('DB_USER', '" . addslashes($db['user']) . "');\n";
                 $config_content .= "define('DB_PASS', '" . addslashes($db['pass']) . "');\n";
-                $config_content .= "define('GEMINI_API_KEY', '" . addslashes($gemini_key) . "');\n";
 
                 file_put_contents($config_file, $config_content);
 
@@ -92,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="flex items-center justify-center min-h-screen">
     <div class="max-w-md w-full p-8 bg-gray-900 rounded-xl border border-gray-800 shadow-2xl">
         <h1 class="text-3xl font-black italic uppercase tracking-tighter mb-6">
-            System <span class="accent-orange">Installer</span>
+            System <span class="accent-orange">Nexus</span> Installer
         </h1>
 
         <?php if ($error): ?>
@@ -107,78 +110,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <ul class="space-y-2 text-sm">
                     <li class="flex justify-between">
                         <span>PHP 8.1+</span>
-                        <span class="<?php echo PHP_VERSION_ID >= 80100 ? 'text-green-500' : 'text-red-500'; ?>">
-                            <?php echo PHP_VERSION; ?>
-                        </span>
+                        <span class="<?php echo PHP_VERSION_ID >= 80100 ? 'text-green-500' : 'text-red-500'; ?>"><?php echo PHP_VERSION; ?></span>
                     </li>
                     <li class="flex justify-between">
                         <span>PDO MySQL</span>
-                        <span class="<?php echo extension_loaded('pdo_mysql') ? 'text-green-500' : 'text-red-500'; ?>">
-                            <?php echo extension_loaded('pdo_mysql') ? 'Active' : 'Missing'; ?>
-                        </span>
-                    </li>
-                    <li class="flex justify-between">
-                        <span>CURL</span>
-                        <span class="<?php echo extension_loaded('curl') ? 'text-green-500' : 'text-red-500'; ?>">
-                            <?php echo extension_loaded('curl') ? 'Active' : 'Missing'; ?>
-                        </span>
+                        <span class="<?php echo extension_loaded('pdo_mysql') ? 'text-green-500' : 'text-red-500'; ?>"><?php echo extension_loaded('pdo_mysql') ? 'Active' : 'Missing'; ?></span>
                     </li>
                 </ul>
-                <?php if (PHP_VERSION_ID >= 80100 && extension_loaded('pdo_mysql') && extension_loaded('curl')): ?>
+                <?php if (PHP_VERSION_ID >= 80100 && extension_loaded('pdo_mysql')): ?>
                     <a href="?step=2" class="block w-full text-center bg-orange text-black font-black py-3 rounded uppercase tracking-widest mt-6">Continue</a>
-                <?php else: ?>
-                    <p class="text-red-500 text-xs mt-4">Environment requirements not met.</p>
                 <?php endif; ?>
             </div>
 
         <?php elseif ($step == 2): ?>
             <form method="POST" class="space-y-4">
                 <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400">Stage 2: Database Setup</h2>
-                <div>
-                    <label class="block text-[10px] uppercase font-black text-gray-500 mb-1">DB Host</label>
-                    <input type="text" name="db_host" value="localhost" class="w-full bg-black border border-gray-800 rounded p-2 outline-none focus:border-orange">
-                </div>
-                <div>
-                    <label class="block text-[10px] uppercase font-black text-gray-500 mb-1">DB Name</label>
-                    <input type="text" name="db_name" required class="w-full bg-black border border-gray-800 rounded p-2 outline-none focus:border-orange">
-                </div>
-                <div>
-                    <label class="block text-[10px] uppercase font-black text-gray-500 mb-1">DB User</label>
-                    <input type="text" name="db_user" required class="w-full bg-black border border-gray-800 rounded p-2 outline-none focus:border-orange">
-                </div>
-                <div>
-                    <label class="block text-[10px] uppercase font-black text-gray-500 mb-1">DB Pass</label>
-                    <input type="password" name="db_pass" class="w-full bg-black border border-gray-800 rounded p-2 outline-none focus:border-orange">
-                </div>
+                <input type="text" name="db_host" value="localhost" placeholder="DB Host" class="w-full bg-black border border-gray-800 rounded p-2 outline-none focus:border-orange">
+                <input type="text" name="db_name" required placeholder="DB Name" class="w-full bg-black border border-gray-800 rounded p-2 outline-none focus:border-orange">
+                <input type="text" name="db_user" required placeholder="DB User" class="w-full bg-black border border-gray-800 rounded p-2 outline-none focus:border-orange">
+                <input type="password" name="db_pass" placeholder="DB Pass" class="w-full bg-black border border-gray-800 rounded p-2 outline-none focus:border-orange">
                 <button type="submit" class="w-full bg-orange text-black font-black py-3 rounded uppercase tracking-widest mt-6">Test & Proceed</button>
             </form>
 
         <?php elseif ($step == 3): ?>
             <form method="POST" class="space-y-4">
-                <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400">Stage 3: Account & API</h2>
-                <div>
-                    <label class="block text-[10px] uppercase font-black text-gray-500 mb-1">Admin Username</label>
-                    <input type="text" name="admin_user" required class="w-full bg-black border border-gray-800 rounded p-2 outline-none focus:border-orange">
-                </div>
-                <div>
-                    <label class="block text-[10px] uppercase font-black text-gray-500 mb-1">Admin Password</label>
-                    <input type="password" name="admin_pass" required class="w-full bg-black border border-gray-800 rounded p-2 outline-none focus:border-orange">
-                </div>
-                <div>
-                    <label class="block text-[10px] uppercase font-black text-gray-500 mb-1">Gemini API Key</label>
-                    <input type="text" name="gemini_key" class="w-full bg-black border border-gray-800 rounded p-2 outline-none focus:border-orange">
-                </div>
-                <button type="submit" class="w-full bg-orange text-black font-black py-3 rounded uppercase tracking-widest mt-6">Install System</button>
+                <h2 class="text-sm font-bold uppercase tracking-widest text-gray-400">Stage 3: Nexus Configuration</h2>
+                <input type="text" name="admin_user" required placeholder="Admin Username" class="w-full bg-black border border-gray-800 rounded p-2 outline-none focus:border-orange">
+                <input type="password" name="admin_pass" required placeholder="Admin Password" class="w-full bg-black border border-gray-800 rounded p-2 outline-none focus:border-orange">
+                <div class="h-px bg-gray-800 my-4"></div>
+                <input type="text" name="deepseek_key" placeholder="DeepSeek API Key" class="w-full bg-black border border-gray-800 rounded p-2 outline-none focus:border-orange text-xs font-mono">
+                <input type="text" name="gemini_key" placeholder="Gemini API Key" class="w-full bg-black border border-gray-800 rounded p-2 outline-none focus:border-orange text-xs font-mono">
+                <button type="submit" class="w-full bg-orange text-black font-black py-3 rounded uppercase tracking-widest mt-6">Initialize Portfolio</button>
             </form>
 
         <?php elseif ($step == 4): ?>
             <div class="text-center space-y-4">
-                <div class="w-20 h-20 bg-green-500/10 border border-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                </div>
-                <h2 class="text-xl font-bold uppercase italic">Installation Complete</h2>
-                <p class="text-sm text-gray-400">Your portfolio is now ready. For security, you must <strong>delete the /install folder</strong> immediately.</p>
-                <a href="../" class="block w-full bg-orange text-black font-black py-3 rounded uppercase tracking-widest mt-6">Go to Site</a>
+                <h2 class="text-xl font-bold uppercase italic">Nexus Online</h2>
+                <p class="text-sm text-gray-400">Installation complete. Delete /install folder.</p>
+                <a href="../" class="block w-full bg-orange text-black font-black py-3 rounded uppercase tracking-widest mt-6">Enter Grid</a>
             </div>
         <?php endif; ?>
     </div>
