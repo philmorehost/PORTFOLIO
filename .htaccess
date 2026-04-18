@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Redirect /project/slug to project.php?slug=slug
+RewriteRule ^project/([^/]+)/?$ project.php?slug=$1 [L,QSA]
+
+# Hide .php extension
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^([^\.]+)$ $1.php [NC,L]
