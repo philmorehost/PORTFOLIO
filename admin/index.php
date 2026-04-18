@@ -34,6 +34,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $seo_data = $_POST['seo_data'];
         $is_pinned = isset($_POST['is_pinned']) ? 1 : 0;
 
+        // Handle local image saving if it's a data URL
+        if (strpos($thumbnail_url, 'data:image') === 0) {
+            $thumbnail_url = save_local_image($thumbnail_url, $slug);
+        }
+
         if ($id) {
             $stmt = $pdo->prepare("UPDATE projects SET title=?, slug=?, content=?, tech_stack=?, url=?, thumbnail_url=?, gallery_images=?, demo_login=?, access_points=?, type=?, wa_message=?, seo_data=?, is_pinned=? WHERE id=?");
             $stmt->execute([$title, $slug, $content, $tech_stack, $url, $thumbnail_url, $gallery_images, $demo_login, $access_points, $type, $wa_message, $seo_data, $is_pinned, $id]);
@@ -46,6 +51,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['delete_project'])) {
         $stmt = $pdo->prepare("DELETE FROM projects WHERE id = ?");
         $stmt->execute([$_POST['id']]);
+    }
+
+    if (isset($_POST['capture_psi'])) {
+        $psi_img = capture_screenshot_psi($_POST['url']);
+        echo json_encode(['screenshot' => $psi_img]);
+        exit;
     }
 }
 
@@ -65,6 +76,15 @@ $projects = $stmt->fetchAll();
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/assets/css/style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .mode-ai .engine-border { border-color: var(--glossy-purple); }
+        .mode-ai .engine-text { color: var(--glossy-purple); }
+        .mode-ai .engine-btn { background-color: var(--glossy-purple); }
+
+        .mode-manual .engine-border { border-color: var(--sharp-orange); }
+        .mode-manual .engine-text { color: var(--sharp-orange); }
+        .mode-manual .engine-btn { background-color: var(--sharp-orange); }
+    </style>
 </head>
 <body class="bg-pitch-black text-white p-4 md:p-10">
     <div class="max-w-4xl mx-auto space-y-12 pb-20">
@@ -98,20 +118,30 @@ $projects = $stmt->fetchAll();
             </form>
         </div>
 
-        <!-- Add/Edit Project (Simple Form) -->
-        <div class="bg-white/5 border border-white/10 p-8 rounded-xl space-y-6">
-            <h2 class="text-xs font-black text-sharp-orange uppercase tracking-[0.4em] flex items-center gap-2">
-                <i data-lucide="plus-square" class="w-4 h-4"></i> Project Engine
-            </h2>
+        <!-- Hybrid Project Engine -->
+        <div id="engineContainer" class="bg-white/5 border border-white/10 p-8 rounded-xl space-y-6 transition-colors duration-500 mode-ai">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xs font-black engine-text uppercase tracking-[0.4em] flex items-center gap-2 transition-colors">
+                    <i data-lucide="zap" class="w-4 h-4"></i> Project Engine
+                </h2>
+                <div class="flex bg-black/40 p-1 rounded-lg border border-white/5">
+                    <button onclick="setMode('ai')" id="modeAi" class="px-4 py-1.5 rounded text-[9px] font-black uppercase transition-all bg-glossy-purple text-white">AI AUTO</button>
+                    <button onclick="setMode('manual')" id="modeManual" class="px-4 py-1.5 rounded text-[9px] font-black uppercase transition-all text-text-dim">MANUAL</button>
+                </div>
+            </div>
+
             <div class="flex gap-4 mb-4">
-                <input type="text" id="aiUrl" placeholder="https://example.com" class="flex-1 bg-black/40 border border-white/10 rounded-lg p-3 outline-none focus:border-sharp-orange">
-                <button onclick="aiScan()" id="aiBtn" class="px-6 py-3 bg-glossy-purple text-white font-bold rounded uppercase tracking-widest text-[10px] flex items-center gap-2">
-                    <i data-lucide="sparkles" class="w-4 h-4"></i> AI SCAN
+                <input type="text" id="targetUrl" placeholder="https://example.com" class="flex-1 bg-black/40 border border-white/10 rounded-lg p-3 outline-none focus:border-sharp-orange transition-all engine-border">
+                <button onclick="triggerCapture()" id="captureBtn" class="px-6 py-3 engine-btn text-black font-black rounded uppercase tracking-widest text-[10px] flex items-center gap-2 transition-all">
+                    <i data-lucide="sparkles" id="captureIcon" class="w-4 h-4"></i> <span id="captureText">AI SYNC</span>
                 </button>
             </div>
+
             <form method="POST" class="space-y-4" id="projectForm">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <input type="hidden" name="id" id="projectId">
+                <input type="hidden" name="thumbnail_url" id="projectThumb">
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] font-black text-text-dim uppercase mb-1">Title</label>
@@ -122,6 +152,7 @@ $projects = $stmt->fetchAll();
                         <input type="text" name="url" id="projectUrl" placeholder="URL" required class="w-full bg-black/40 border border-white/10 rounded-lg p-3 outline-none focus:border-sharp-orange">
                     </div>
                 </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-[10px] font-black text-text-dim uppercase mb-1">Type</label>
@@ -131,19 +162,26 @@ $projects = $stmt->fetchAll();
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-black text-text-dim uppercase mb-1">Slug (auto-generated if empty)</label>
+                        <label class="block text-[10px] font-black text-text-dim uppercase mb-1">Slug</label>
                         <input type="text" name="slug" id="projectSlug" placeholder="SLUG" class="w-full bg-black/40 border border-white/10 rounded-lg p-3 outline-none focus:border-sharp-orange">
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-[10px] font-black text-text-dim uppercase mb-1">Power Pitch Content</label>
-                    <textarea name="content" id="projectContent" placeholder="CONTENT (Markdown)" rows="8" class="w-full bg-black/40 border border-white/10 rounded-lg p-3 outline-none focus:border-sharp-orange"></textarea>
+                <div id="previewArea" class="hidden aspect-video w-full rounded-xl overflow-hidden bg-black/40 border border-white/5 relative group mb-4">
+                    <img id="thumbPreview" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                         <span class="text-[10px] font-black uppercase tracking-widest text-white">Visual Captured</span>
+                    </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-black text-text-dim uppercase mb-1">WhatsApp Payload</label>
-                    <textarea name="wa_message" id="projectWa" placeholder="WhatsApp message..." rows="2" class="w-full bg-black/40 border border-white/10 rounded-lg p-3 outline-none focus:border-sharp-orange"></textarea>
+                    <label class="block text-[10px] font-black text-text-dim uppercase mb-1">Content (Markdown)</label>
+                    <textarea name="content" id="projectContent" placeholder="Describe the system architecture..." rows="6" class="w-full bg-black/40 border border-white/10 rounded-lg p-3 outline-none focus:border-sharp-orange"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black text-text-dim uppercase mb-1">WhatsApp Message</label>
+                    <textarea name="wa_message" id="projectWa" placeholder="Default inquiry message..." rows="2" class="w-full bg-black/40 border border-white/10 rounded-lg p-3 outline-none focus:border-sharp-orange"></textarea>
                 </div>
 
                 <input type="hidden" name="tech_stack" id="projectTech" value='[]'>
@@ -151,14 +189,13 @@ $projects = $stmt->fetchAll();
                 <input type="hidden" name="demo_login" id="projectDemo" value='{}'>
                 <input type="hidden" name="access_points" id="projectAccess" value='{}'>
                 <input type="hidden" name="seo_data" id="projectSeo" value='{}'>
-                <input type="hidden" name="thumbnail_url" id="projectThumb" value="">
 
                 <div class="flex items-center gap-2">
                     <input type="checkbox" name="is_pinned" id="projectPinned" class="w-4 h-4 accent-sharp-orange">
                     <label for="projectPinned" class="text-xs uppercase font-black text-text-dim">Pin to Hero</label>
                 </div>
 
-                <button type="submit" name="save_project" class="w-full py-4 bg-sharp-orange text-black font-black rounded uppercase tracking-widest text-sm transition-all shadow-[0_0_20px_rgba(255,102,0,0.3)]">Publish Node</button>
+                <button type="submit" name="save_project" class="w-full py-4 engine-btn text-black font-black rounded uppercase tracking-widest text-sm transition-all shadow-xl">Publish Node</button>
                 <button type="button" onclick="resetForm()" class="w-full py-2 bg-white/5 border border-white/10 text-text-dim font-bold rounded uppercase tracking-widest text-[10px] transition-all">Reset Form</button>
             </form>
         </div>
@@ -198,57 +235,65 @@ $projects = $stmt->fetchAll();
 
     <script>
         lucide.createIcons();
+        let currentMode = 'ai';
 
-        function editProject(proj) {
-            document.getElementById('projectId').value = proj.id;
-            document.getElementById('projectTitle').value = proj.title;
-            document.getElementById('projectUrl').value = proj.url;
-            document.getElementById('projectType').value = proj.type;
-            document.getElementById('projectSlug').value = proj.slug;
-            document.getElementById('projectContent').value = proj.content;
-            document.getElementById('projectTech').value = proj.tech_stack;
-            document.getElementById('projectGallery').value = proj.gallery_images;
-            document.getElementById('projectDemo').value = proj.demo_login;
-            document.getElementById('projectAccess').value = proj.access_points;
-            document.getElementById('projectSeo').value = proj.seo_data;
-            document.getElementById('projectThumb').value = proj.thumbnail_url;
-            document.getElementById('projectWa').value = proj.wa_message;
-            document.getElementById('projectPinned').checked = proj.is_pinned == 1;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        function setMode(mode) {
+            currentMode = mode;
+            const container = document.getElementById('engineContainer');
+            const modeAi = document.getElementById('modeAi');
+            const modeManual = document.getElementById('modeManual');
+            const captureIcon = document.getElementById('captureIcon');
+            const captureText = document.getElementById('captureText');
+
+            if (mode === 'ai') {
+                container.classList.remove('mode-manual');
+                container.classList.add('mode-ai');
+                modeAi.classList.add('bg-glossy-purple', 'text-white');
+                modeAi.classList.remove('text-text-dim');
+                modeManual.classList.remove('bg-sharp-orange', 'text-black');
+                modeManual.classList.add('text-text-dim');
+                captureText.innerText = 'AI SYNC';
+                captureIcon.setAttribute('data-lucide', 'sparkles');
+            } else {
+                container.classList.remove('mode-ai');
+                container.classList.add('mode-manual');
+                modeManual.classList.add('bg-sharp-orange', 'text-black');
+                modeManual.classList.remove('text-text-dim');
+                modeAi.classList.remove('bg-glossy-purple', 'text-white');
+                modeAi.classList.add('text-text-dim');
+                captureText.innerText = 'MANUAL CAPTURE';
+                captureIcon.setAttribute('data-lucide', 'camera');
+            }
+            lucide.createIcons();
         }
 
-        function resetForm() {
-            document.getElementById('projectForm').reset();
-            document.getElementById('projectId').value = '';
-            document.getElementById('projectTech').value = '[]';
-            document.getElementById('projectGallery').value = '[]';
-            document.getElementById('projectDemo').value = '{}';
-            document.getElementById('projectAccess').value = '{}';
-            document.getElementById('projectSeo').value = '{}';
-            document.getElementById('projectThumb').value = '';
+        function triggerCapture() {
+            const url = document.getElementById('targetUrl').value;
+            if (!url) return alert('Enter a target URL');
+
+            if (currentMode === 'ai') {
+                aiScan(url);
+            } else {
+                psiCapture(url);
+            }
         }
 
-        async function aiScan() {
-            const url = document.getElementById('aiUrl').value;
-            if (!url) return alert('Enter a URL first');
-
-            const btn = document.getElementById('aiBtn');
+        async function aiScan(url) {
+            const btn = document.getElementById('captureBtn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = 'SCANNING...';
+            btn.innerHTML = 'AI ANALYZING...';
             btn.disabled = true;
 
             try {
                 const formData = new FormData();
                 formData.append('url', url);
 
-                const response = await fetch('/admin/ai_generate', {
-                    method: 'POST',
-                    body: formData
-                });
+                const response = await fetch('/admin/ai_generate', { method: 'POST', body: formData });
                 const data = await response.json();
 
                 if (data.error) {
-                    alert('AI Scan Failed: ' + data.error);
+                    alert('AI Error: ' + data.error + '. Switching to Manual Mode.');
+                    setMode('manual');
                 } else {
                     document.getElementById('projectUrl').value = url;
                     document.getElementById('projectTitle').value = data.metaTitle.split('|')[0].trim();
@@ -261,18 +306,85 @@ $projects = $stmt->fetchAll();
                         keywords: data.keywords
                     });
 
-                    const thumb = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&embed=screenshot.url`;
-                    document.getElementById('projectThumb').value = thumb;
-
-                    alert('AI Analysis Complete. Review and publish.');
+                    // Trigger PSI for the screenshot anyway in AI mode for better consistency if needed,
+                    // or use the auto-thumbnail. Let's use PSI for reliability.
+                    psiCapture(url, true);
                 }
             } catch (e) {
                 console.error(e);
-                alert('An error occurred during AI scan.');
+                alert('AI Engine Failure. Switching to Manual.');
+                setMode('manual');
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
             }
+        }
+
+        async function psiCapture(url, silent = false) {
+            const btn = document.getElementById('captureBtn');
+            const originalText = btn.innerHTML;
+            if (!silent) {
+                btn.innerHTML = 'CAPTURING Visual...';
+                btn.disabled = true;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('url', url);
+                formData.append('capture_psi', '1');
+                formData.append('csrf_token', '<?php echo $csrf_token; ?>');
+
+                const response = await fetch('/admin/index', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (data.screenshot) {
+                    document.getElementById('projectThumb').value = data.screenshot;
+                    document.getElementById('thumbPreview').src = data.screenshot;
+                    document.getElementById('previewArea').classList.remove('hidden');
+                    document.getElementById('projectUrl').value = url;
+                    if (!silent) alert('Interface Snapshot Secured.');
+                } else {
+                    if (!silent) alert('Capture Failed. Check API connectivity.');
+                }
+            } catch (e) {
+                console.error(e);
+                if (!silent) alert('Capture Engine Error.');
+            } finally {
+                if (!silent) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        function editProject(proj) {
+            document.getElementById('projectId').value = proj.id;
+            document.getElementById('projectTitle').value = proj.title;
+            document.getElementById('projectUrl').value = proj.url;
+            document.getElementById('projectType').value = proj.type;
+            document.getElementById('projectSlug').value = proj.slug;
+            document.getElementById('projectContent').value = proj.content;
+            document.getElementById('projectTech').value = proj.tech_stack;
+            document.getElementById('projectSeo').value = proj.seo_data;
+            document.getElementById('projectThumb').value = proj.thumbnail_url;
+            document.getElementById('projectWa').value = proj.wa_message;
+            document.getElementById('projectPinned').checked = proj.is_pinned == 1;
+
+            if (proj.thumbnail_url) {
+                document.getElementById('thumbPreview').src = proj.thumbnail_url;
+                document.getElementById('previewArea').classList.remove('hidden');
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            document.getElementById('projectForm').reset();
+            document.getElementById('projectId').value = '';
+            document.getElementById('projectTech').value = '[]';
+            document.getElementById('projectSeo').value = '{}';
+            document.getElementById('projectThumb').value = '';
+            document.getElementById('previewArea').classList.add('hidden');
         }
     </script>
 </body>

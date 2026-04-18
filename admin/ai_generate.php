@@ -24,6 +24,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ";
 
     $result = call_gemini_api($prompt);
-    echo json_encode($result);
+
+    // Ensure we return a proper JSON response even on error for the frontend to handle
+    if (isset($result['error'])) {
+        header('Content-Type: application/json', true, 400);
+        echo json_encode(['error' => $result['error']]);
+    } else {
+        header('Content-Type: application/json');
+        echo json_encode($result);
+    }
     exit;
 }
