@@ -162,12 +162,57 @@ $projects = $stmt->fetchAll();
 
                     <textarea name="code_snippet" id="projectCode" rows="6" placeholder="// Ghost Architecture Code..." class="w-full bg-black/60 border border-white/10 rounded-2xl p-5 outline-none focus:border-sharp-orange font-mono text-xs leading-relaxed text-white/80"></textarea>
 
-                    <div class="bg-white/5 border border-white/10 p-6 rounded-2xl space-y-4">
-                        <h3 class="text-[10px] font-black uppercase text-sharp-orange tracking-[0.3em]">Multi-Tier Demo Access</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <input type="text" id="demoL0" placeholder="L0: Super (URL)" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-sharp-orange">
-                            <input type="text" id="demoL1" placeholder="L1: Restricted (URL)" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-sharp-orange">
-                            <input type="text" id="demoL2" placeholder="L2: Standard (URL)" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-sharp-orange">
+                    <div class="bg-white/5 border border-white/10 p-8 rounded-[2rem] space-y-8">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-[10px] font-black uppercase text-sharp-orange tracking-[0.4em]">Multi-Tier Interface Access (One-Click Ready)</h3>
+                            <div class="px-3 py-1 bg-sharp-orange/10 border border-sharp-orange/30 rounded-full text-[8px] font-black uppercase text-sharp-orange tracking-widest">Active_Sync</div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <!-- Level 0: Super Admin -->
+                            <div class="p-6 rounded-2xl bg-black/40 border border-white/5 space-y-4 hover:border-glossy-purple/30 transition-all">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-2 h-2 rounded-full bg-glossy-purple shadow-[0_0_10px_#BF00FF]"></div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-white/60">Level 0: Super Admin</span>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <input type="text" id="l0_url" placeholder="Login URL" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-glossy-purple">
+                                    <input type="text" id="l0_bypass" placeholder="Direct Bypass / One-Click Link" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-glossy-purple">
+                                    <input type="text" id="l0_user" placeholder="Username" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-glossy-purple">
+                                    <input type="text" id="l0_pass" placeholder="Password" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-glossy-purple">
+                                    <input type="text" id="l0_note" placeholder="Legacy Note Payload (PIN/Security Answer)" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-glossy-purple md:col-span-2">
+                                </div>
+                            </div>
+
+                            <!-- Level 1: Restricted Admin -->
+                            <div class="p-6 rounded-2xl bg-black/40 border border-white/5 space-y-4 hover:border-sharp-orange/30 transition-all">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-2 h-2 rounded-full bg-sharp-orange shadow-[0_0_10px_#FF6600]"></div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-white/60">Level 1: Restricted Admin</span>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <input type="text" id="l1_url" placeholder="Login URL" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-sharp-orange">
+                                    <input type="text" id="l1_bypass" placeholder="Direct Bypass / One-Click Link" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-sharp-orange">
+                                    <input type="text" id="l1_user" placeholder="Username" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-sharp-orange">
+                                    <input type="text" id="l1_pass" placeholder="Password" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-sharp-orange">
+                                    <input type="text" id="l1_note" placeholder="Legacy Note Payload (PIN/Security Answer)" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-sharp-orange md:col-span-2">
+                                </div>
+                            </div>
+
+                            <!-- Level 2: Standard User -->
+                            <div class="p-6 rounded-2xl bg-black/40 border border-white/5 space-y-4 hover:border-white/20 transition-all">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-2 h-2 rounded-full bg-white/40 shadow-[0_0_10px_#ffffff]"></div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest text-white/60">Level 2: Standard User</span>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <input type="text" id="l2_url" placeholder="Login URL" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-white">
+                                    <input type="text" id="l2_bypass" placeholder="Direct Bypass / One-Click Link" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-white">
+                                    <input type="text" id="l2_user" placeholder="Username" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-white">
+                                    <input type="text" id="l2_pass" placeholder="Password" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-white">
+                                    <input type="text" id="l2_note" placeholder="Legacy Note Payload (PIN/Security Answer)" class="bg-black/60 border border-white/10 rounded-xl p-3 text-[10px] font-mono outline-none focus:border-white md:col-span-2">
+                                </div>
+                            </div>
                         </div>
                         <input type="hidden" name="demo_access" id="projectDemoAccess" value='{}'>
                     </div>
@@ -268,9 +313,27 @@ $projects = $stmt->fetchAll();
 
         document.getElementById('projectForm').onsubmit = function() {
             const demo = {
-                l0: document.getElementById('demoL0').value,
-                l1: document.getElementById('demoL1').value,
-                l2: document.getElementById('demoL2').value
+                l0: {
+                    url: document.getElementById('l0_url').value,
+                    bypass: document.getElementById('l0_bypass').value,
+                    user: document.getElementById('l0_user').value,
+                    pass: document.getElementById('l0_pass').value,
+                    note: document.getElementById('l0_note').value
+                },
+                l1: {
+                    url: document.getElementById('l1_url').value,
+                    bypass: document.getElementById('l1_bypass').value,
+                    user: document.getElementById('l1_user').value,
+                    pass: document.getElementById('l1_pass').value,
+                    note: document.getElementById('l1_note').value
+                },
+                l2: {
+                    url: document.getElementById('l2_url').value,
+                    bypass: document.getElementById('l2_bypass').value,
+                    user: document.getElementById('l2_user').value,
+                    pass: document.getElementById('l2_pass').value,
+                    note: document.getElementById('l2_note').value
+                }
             };
             document.getElementById('projectDemoAccess').value = JSON.stringify(demo);
         };
@@ -343,9 +406,24 @@ $projects = $stmt->fetchAll();
             renderGallery();
 
             const demo = JSON.parse(proj.demo_access || '{}');
-            document.getElementById('demoL0').value = demo.l0 || '';
-            document.getElementById('demoL1').value = demo.l1 || '';
-            document.getElementById('demoL2').value = demo.l2 || '';
+            document.getElementById('l0_url').value = demo.l0?.url || '';
+            document.getElementById('l0_bypass').value = demo.l0?.bypass || '';
+            document.getElementById('l0_user').value = demo.l0?.user || '';
+            document.getElementById('l0_pass').value = demo.l0?.pass || '';
+            document.getElementById('l0_note').value = demo.l0?.note || '';
+
+            document.getElementById('l1_url').value = demo.l1?.url || '';
+            document.getElementById('l1_bypass').value = demo.l1?.bypass || '';
+            document.getElementById('l1_user').value = demo.l1?.user || '';
+            document.getElementById('l1_pass').value = demo.l1?.pass || '';
+            document.getElementById('l1_note').value = demo.l1?.note || '';
+
+            document.getElementById('l2_url').value = demo.l2?.url || '';
+            document.getElementById('l2_bypass').value = demo.l2?.bypass || '';
+            document.getElementById('l2_user').value = demo.l2?.user || '';
+            document.getElementById('l2_pass').value = demo.l2?.pass || '';
+            document.getElementById('l2_note').value = demo.l2?.note || '';
+
             document.getElementById('projectDemoAccess').value = proj.demo_access || '{}';
 
             if (proj.screenshot_path) {
@@ -362,9 +440,15 @@ $projects = $stmt->fetchAll();
             document.getElementById('projectGallery').value = '[]';
             document.getElementById('galleryPreview').innerHTML = '';
             document.getElementById('projectDemoAccess').value = '{}';
-            document.getElementById('demoL0').value = '';
-            document.getElementById('demoL1').value = '';
-            document.getElementById('demoL2').value = '';
+
+            ['l0', 'l1', 'l2'].forEach(l => {
+                document.getElementById(`${l}_url`).value = '';
+                document.getElementById(`${l}_bypass`).value = '';
+                document.getElementById(`${l}_user`).value = '';
+                document.getElementById(`${l}_pass`).value = '';
+                document.getElementById(`${l}_note`).value = '';
+            });
+
             document.getElementById('previewArea').classList.add('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }

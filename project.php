@@ -133,28 +133,71 @@ $baseUrl = get_base_url();
                         </div>
                     </div>
 
-                    <?php if (!empty($demoAccess['l0']) || !empty($demoAccess['l1']) || !empty($demoAccess['l2'])): ?>
-                    <div class="bg-white/5 border border-white/10 p-10 rounded-[2.5rem] space-y-6 shadow-xl">
-                        <h3 class="text-[11px] font-black uppercase tracking-[0.5em] text-sharp-orange flex items-center gap-3"><i data-lucide="shield-check" class="w-5 h-5"></i> Demo_Access</h3>
-                        <div class="flex flex-col gap-3">
-                            <?php if (!empty($demoAccess['l0'])): ?>
-                                <a href="<?php echo e($demoAccess['l0']); ?>" target="_blank" class="flex items-center justify-between p-4 bg-black/60 border border-white/10 rounded-xl hover:border-sharp-orange transition-all group">
-                                    <span class="text-[10px] font-black uppercase tracking-widest">Level 0: Super Admin</span>
-                                    <i data-lucide="external-link" class="w-4 h-4 text-sharp-orange group-hover:scale-110 transition-transform"></i>
-                                </a>
-                            <?php endif; ?>
-                            <?php if (!empty($demoAccess['l1'])): ?>
-                                <a href="<?php echo e($demoAccess['l1']); ?>" target="_blank" class="flex items-center justify-between p-4 bg-black/60 border border-white/10 rounded-xl hover:border-sharp-orange transition-all group">
-                                    <span class="text-[10px] font-black uppercase tracking-widest">Level 1: Restricted</span>
-                                    <i data-lucide="external-link" class="w-4 h-4 text-sharp-orange group-hover:scale-110 transition-transform"></i>
-                                </a>
-                            <?php endif; ?>
-                            <?php if (!empty($demoAccess['l2'])): ?>
-                                <a href="<?php echo e($demoAccess['l2']); ?>" target="_blank" class="flex items-center justify-between p-4 bg-black/60 border border-white/10 rounded-xl hover:border-sharp-orange transition-all group">
-                                    <span class="text-[10px] font-black uppercase tracking-widest">Level 2: Standard</span>
-                                    <i data-lucide="external-link" class="w-4 h-4 text-sharp-orange group-hover:scale-110 transition-transform"></i>
-                                </a>
-                            <?php endif; ?>
+                    <?php
+                    $hasDemo = false;
+                    foreach(['l0', 'l1', 'l2'] as $l) {
+                        if (!empty($demoAccess[$l]['url']) || !empty($demoAccess[$l]['bypass'])) {
+                            $hasDemo = true; break;
+                        }
+                    }
+                    if ($hasDemo): ?>
+                    <div class="bg-white/5 border border-white/10 p-10 rounded-[2.5rem] space-y-8 shadow-xl">
+                        <h3 class="text-[11px] font-black uppercase tracking-[0.5em] text-sharp-orange flex items-center gap-3"><i data-lucide="shield-check" class="w-5 h-5"></i> Multi-Tier Demo Access</h3>
+
+                        <div class="space-y-6">
+                            <?php
+                            $levels = [
+                                'l0' => ['name' => 'Level 0: Super Admin', 'color' => 'glossy-purple'],
+                                'l1' => ['name' => 'Level 1: Restricted', 'color' => 'sharp-orange'],
+                                'l2' => ['name' => 'Level 2: Standard', 'color' => 'white']
+                            ];
+                            foreach($levels as $key => $info):
+                                if(empty($demoAccess[$key]['url']) && empty($demoAccess[$key]['bypass'])) continue;
+                                $target = !empty($demoAccess[$key]['bypass']) ? $demoAccess[$key]['bypass'] : $demoAccess[$key]['url'];
+                            ?>
+                                <div class="p-6 rounded-2xl bg-black/40 border border-white/5 space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-2 h-2 rounded-full bg-<?php echo $info['color']; ?>"></div>
+                                            <span class="text-[10px] font-black uppercase tracking-widest text-white/60"><?php echo $info['name']; ?></span>
+                                        </div>
+                                        <a href="<?php echo e($target); ?>" target="_blank" class="px-4 py-2 bg-<?php echo $info['color']; ?> <?php echo $key === 'l2' ? 'text-black' : ($key === 'l0' ? 'text-white' : 'text-black'); ?> rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-2 hover:scale-105 transition-all">
+                                            <?php echo !empty($demoAccess[$key]['bypass']) ? 'One-Click Access' : 'Launch Demo'; ?>
+                                            <i data-lucide="external-link" class="w-3 h-3"></i>
+                                        </a>
+                                    </div>
+
+                                    <?php if(!empty($demoAccess[$key]['user']) || !empty($demoAccess[$key]['pass'])): ?>
+                                        <div class="grid grid-cols-2 gap-4 pt-2">
+                                            <?php if(!empty($demoAccess[$key]['user'])): ?>
+                                                <div class="bg-black/60 p-3 rounded-xl border border-white/5">
+                                                    <div class="text-[8px] text-text-dim uppercase mb-1">Username</div>
+                                                    <div class="text-[10px] font-mono text-white flex items-center justify-between">
+                                                        <span><?php echo e($demoAccess[$key]['user']); ?></span>
+                                                        <button onclick="navigator.clipboard.writeText('<?php echo e($demoAccess[$key]['user']); ?>')" class="hover:text-sharp-orange"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+                                            <?php if(!empty($demoAccess[$key]['pass'])): ?>
+                                                <div class="bg-black/60 p-3 rounded-xl border border-white/5">
+                                                    <div class="text-[8px] text-text-dim uppercase mb-1">Password</div>
+                                                    <div class="text-[10px] font-mono text-white flex items-center justify-between">
+                                                        <span><?php echo e($demoAccess[$key]['pass']); ?></span>
+                                                        <button onclick="navigator.clipboard.writeText('<?php echo e($demoAccess[$key]['pass']); ?>')" class="hover:text-sharp-orange"><i data-lucide="copy" class="w-3 h-3"></i></button>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if(!empty($demoAccess[$key]['note'])): ?>
+                                        <div class="bg-glossy-purple/5 p-4 rounded-xl border border-glossy-purple/20">
+                                            <div class="text-[8px] text-glossy-purple font-black uppercase mb-1 tracking-widest">Legacy Note Payload</div>
+                                            <p class="text-[10px] text-white/80 leading-relaxed"><?php echo e($demoAccess[$key]['note']); ?></p>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     </div>
                     <?php endif; ?>

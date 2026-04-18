@@ -70,31 +70,44 @@ if (empty($heroProjects)) $heroProjects = array_slice($projects, 0, 4);
     <main data-barba="container" data-barba-namespace="home" class="px-6 md:px-12 py-10 min-h-screen">
         <div class="max-w-7xl mx-auto space-y-24">
 
-            <section class="py-12 md:py-24 relative overflow-visible">
-                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-sharp-orange/10 blur-[150px] rounded-full -z-10"></div>
-                <div class="flex flex-col lg:flex-row items-center gap-16">
-                    <div class="flex-1 text-center lg:text-left space-y-10">
+            <section class="py-12 md:py-32 relative overflow-visible">
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1200px] aspect-[2/1] bg-gradient-to-r from-sharp-orange/10 via-glossy-purple/10 to-sharp-orange/10 blur-[120px] rounded-full -z-10 opacity-50"></div>
+                <div class="flex flex-col lg:flex-row items-center gap-20">
+                    <div class="flex-1 text-center lg:text-left space-y-12">
                         <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4">
-                            <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/5 border border-white/10 text-[11px] font-bold tracking-[0.4em] uppercase text-text-dim">
-                                <span class="w-2 h-2 rounded-full bg-sharp-orange animate-ping"></span> Intelligence_Synced
+                            <div class="inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-white/5 border border-white/10 text-[10px] font-black tracking-[0.5em] uppercase text-text-dim backdrop-blur-md">
+                                <span class="w-2 h-2 rounded-full bg-sharp-orange shadow-[0_0_10px_#FF6600] animate-pulse"></span>
+                                <span class="text-white">Portfolio_v1.1</span>
+                                <span class="text-glossy-purple">// Intelligence_Synced</span>
                             </div>
                         </div>
-                        <h1 class="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter italic leading-[0.85] text-glow-orange uppercase">
-                            <?php echo e(e($full_name)); ?><br>
-                            <span class="text-sharp-orange">ARCHITECTURE.</span>
+                        <h1 class="text-6xl sm:text-8xl md:text-9xl lg:text-[10rem] font-black tracking-tighter italic leading-[0.8] uppercase">
+                            <span class="text-white">Cyber</span><br>
+                            <span class="text-sharp-orange text-glow-orange">Architect.</span>
                         </h1>
-                        <p class="text-text-dim max-w-2xl mx-auto lg:mx-0 text-xl md:text-2xl leading-relaxed font-medium">
+                        <p class="text-text-dim max-w-xl mx-auto lg:mx-0 text-xl md:text-2xl leading-relaxed font-medium">
                             <?php echo e(e($bio)); ?>
                         </p>
+                        <div class="flex flex-wrap items-center justify-center lg:justify-start gap-6">
+                            <a href="#grid" class="px-10 py-5 bg-sharp-orange text-black font-black rounded-2xl uppercase tracking-[0.3em] text-[12px] shadow-[0_0_40px_rgba(255,102,0,0.3)] hover:scale-105 transition-all active:scale-95">Initialize_Grid</a>
+                            <div class="flex items-center gap-4 px-6 py-4 bg-white/5 border border-white/10 rounded-2xl">
+                                <i data-lucide="shield-check" class="w-5 h-5 text-glossy-purple"></i>
+                                <span class="text-[10px] font-black uppercase tracking-widest text-white/60">Verified_Identity</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="w-full lg:w-[500px] grid grid-cols-2 gap-6">
+                    <div class="w-full lg:w-[550px] grid grid-cols-2 gap-6 relative">
+                        <div class="absolute -inset-4 border border-white/5 rounded-[2.5rem] -z-10 bg-white/[0.02] backdrop-blur-3xl"></div>
                         <?php foreach ($heroProjects as $idx => $proj): ?>
-                            <a href="<?php echo $baseUrl; ?>/project/<?php echo e($proj['slug']); ?>" class="group block aspect-square bg-white/5 border border-white/10 rounded-2xl overflow-hidden relative shadow-2xl hover:border-sharp-orange/50 transition-all duration-500">
-                                <img src="<?php echo $baseUrl . e($proj['screenshot_path']); ?>" alt="Node" class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-all duration-1000 group-hover:scale-110">
-                                <div class="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-black to-transparent">
-                                    <div class="text-[10px] font-black uppercase text-white tracking-widest truncate"><?php echo e($proj['title']); ?></div>
-                                    <div class="text-[8px] font-mono text-sharp-orange uppercase mt-1">Node_0<?php echo $idx + 1; ?></div>
+                            <a href="<?php echo $baseUrl; ?>/project/<?php echo e($proj['slug']); ?>" class="group block aspect-square bg-black border border-white/10 rounded-3xl overflow-hidden relative shadow-2xl hover:border-glossy-purple transition-all duration-700 hover:-translate-y-2">
+                                <img src="<?php echo $baseUrl . e($proj['screenshot_path']); ?>" alt="Node" class="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-100 transition-all duration-1000 group-hover:scale-110 grayscale group-hover:grayscale-0">
+                                <div class="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black via-black/80 to-transparent translate-y-2 group-hover:translate-y-0 transition-transform">
+                                    <div class="text-[11px] font-black uppercase text-white tracking-widest truncate mb-1"><?php echo e($proj['title']); ?></div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-[8px] font-mono text-glossy-purple uppercase tracking-tighter">Node_0<?php echo $idx + 1; ?></div>
+                                        <i data-lucide="arrow-up-right" class="w-3 h-3 text-white/40 group-hover:text-glossy-purple transition-colors"></i>
+                                    </div>
                                 </div>
                             </a>
                         <?php endforeach; ?>
@@ -102,34 +115,52 @@ if (empty($heroProjects)) $heroProjects = array_slice($projects, 0, 4);
                 </div>
             </section>
 
-            <section class="space-y-12">
-                <div class="flex items-end justify-between border-b border-white/10 pb-8">
-                    <h2 class="text-3xl md:text-5xl font-black italic uppercase tracking-tighter leading-none"><span class="text-sharp-orange">System</span>_Nodes</h2>
+            <section id="grid" class="space-y-16">
+                <div class="flex items-center justify-between border-b border-white/10 pb-10">
+                    <div class="space-y-2">
+                        <h2 class="text-4xl md:text-6xl font-black italic uppercase tracking-tighter leading-none"><span class="text-sharp-orange">System</span>_Nodes</h2>
+                        <div class="text-[10px] font-black uppercase text-text-dim tracking-[0.4em]">Grid_Capacity: <?php echo count($projects); ?> / Unlimited</div>
+                    </div>
+                    <div class="hidden md:flex gap-4">
+                        <button class="p-4 rounded-xl bg-white/5 border border-white/10 text-white hover:border-sharp-orange transition-all"><i data-lucide="layout-grid" class="w-5 h-5"></i></button>
+                        <button class="p-4 rounded-xl bg-white/5 border border-white/10 text-text-dim hover:text-white transition-all"><i data-lucide="list" class="w-5 h-5"></i></button>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
                     <?php foreach ($projects as $project):
                         $seo = json_decode($project['seo_tags'], true) ?? [];
                         $tech = json_decode($project['tech_stack'], true) ?? [];
                     ?>
-                        <a href="<?php echo $baseUrl; ?>/project/<?php echo e($project['slug']); ?>" class="group block bg-white/5 border border-white/10 rounded-3xl overflow-hidden hover:border-sharp-orange transition-all duration-700 hover:-translate-y-3 relative shadow-xl">
-                            <div class="aspect-[16/10] relative overflow-hidden bg-black/40">
-                                <img src="<?php echo $baseUrl . e($project['screenshot_path']); ?>" alt="Project" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-70 group-hover:opacity-100" loading="lazy">
-                                <div class="absolute top-6 left-6">
-                                    <span class="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border border-white/10 bg-black/80 text-white backdrop-blur-md">
+                        <a href="<?php echo $baseUrl; ?>/project/<?php echo e($project['slug']); ?>" class="group block bg-black border border-white/10 rounded-[2.5rem] overflow-hidden hover:border-glossy-purple transition-all duration-700 hover:-translate-y-4 relative shadow-2xl">
+                            <div class="aspect-[16/11] relative overflow-hidden bg-white/[0.02]">
+                                <img src="<?php echo $baseUrl . e($project['screenshot_path']); ?>" alt="Project" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-60 group-hover:opacity-100" loading="lazy">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80"></div>
+                                <div class="absolute top-8 left-8">
+                                    <span class="px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border border-white/10 bg-black/60 text-white backdrop-blur-xl group-hover:bg-glossy-purple transition-colors">
                                         <?php echo e($project['category']); ?>
                                     </span>
                                 </div>
-                            </div>
-                            <div class="p-8 space-y-6">
-                                <h3 class="text-2xl font-black italic uppercase tracking-tight group-hover:text-sharp-orange transition-colors"><?php echo e($project['title']); ?></h3>
-                                <p class="text-sm text-text-dim line-clamp-2 leading-relaxed"><?php echo e($seo['metaDescription'] ?? ''); ?></p>
-                                <div class="pt-6 flex items-center justify-between border-t border-white/5">
-                                    <div class="flex items-center gap-2">
-                                        <i data-lucide="activity" class="w-3 h-3 text-sharp-orange animate-pulse"></i>
-                                        <span class="text-[10px] font-bold text-text-dim uppercase tracking-widest">Online</span>
+                                <?php if($project['is_pinned']): ?>
+                                <div class="absolute top-8 right-8">
+                                    <div class="w-8 h-8 rounded-full bg-sharp-orange flex items-center justify-center text-black shadow-[0_0_20px_rgba(255,102,0,0.5)]">
+                                        <i data-lucide="pin" class="w-4 h-4"></i>
                                     </div>
-                                    <div class="text-[12px] font-black text-sharp-orange uppercase"><?php echo e($project['inquiries_count']); ?>_INQ</div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="p-10 space-y-8">
+                                <h3 class="text-3xl font-black italic uppercase tracking-tighter group-hover:text-glossy-purple transition-colors leading-none"><?php echo e($project['title']); ?></h3>
+                                <p class="text-sm text-text-dim line-clamp-3 leading-relaxed font-medium"><?php echo e($seo['metaDescription'] ?? ''); ?></p>
+                                <div class="pt-8 flex items-center justify-between border-t border-white/5">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-sharp-orange animate-pulse"></div>
+                                        <span class="text-[9px] font-black text-text-dim uppercase tracking-[0.2em]">Operational</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 group-hover:translate-x-2 transition-transform">
+                                        <span class="text-[10px] font-black text-white uppercase tracking-widest">Connect</span>
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-sharp-orange"></i>
+                                    </div>
                                 </div>
                             </div>
                         </a>
