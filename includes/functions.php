@@ -20,8 +20,19 @@ function log_api_call($pdo, $provider, $endpoint, $status, $response_time) {
     $stmt->execute([$provider, $endpoint, $status, $response_time]);
 }
 
+function get_api_settings($pdo) {
+    $stmt = $pdo->query("SELECT * FROM api_settings LIMIT 1");
+    return $stmt->fetch();
+}
+
+function get_admin_profile($pdo) {
+    $stmt = $pdo->query("SELECT * FROM admin_profile LIMIT 1");
+    return $stmt->fetch();
+}
+
 function call_ai_service($pdo, $prompt) {
-    $provider = get_setting($pdo, 'active_ai_provider', 'gemini');
+    $api = get_api_settings($pdo);
+    $provider = $api['provider'] ?? 'manual';
 
     if ($provider === 'manual') {
         return ['error' => 'Manual mode active'];
@@ -30,8 +41,8 @@ function call_ai_service($pdo, $prompt) {
     $start_time = microtime(true);
 
     if ($provider === 'deepseek') {
-        $api_key = get_setting($pdo, 'deepseek_api_key', '');
-        $base_url = get_setting($pdo, 'deepseek_base_url', 'https://api.deepseek.com');
+        $api_key = $api['deepseek_key'];
+        $base_url = $api['deepseek_base_url'] ?: 'https://api.deepseek.com';
         $endpoint = "/chat/completions";
 
         $data = [
@@ -69,7 +80,7 @@ function call_ai_service($pdo, $prompt) {
 
     } else {
         // Default to Gemini
-        $api_key = get_setting($pdo, 'gemini_api_key', '');
+        $api_key = $api['gemini_key'];
         $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" . $api_key;
 
         $data = [
@@ -108,7 +119,8 @@ function call_ai_service($pdo, $prompt) {
 }
 
 function capture_screenshot_psi($pdo, $target_url) {
-    $api_key = get_setting($pdo, 'google_psi_key', '');
+    $api = get_api_settings($pdo);
+    $api_key = $api['psi_key'] ?? '';
     $psi_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=" . urlencode($target_url) . "&screenshot=true";
     if ($api_key) $psi_url .= "&key=" . $api_key;
 
@@ -141,16 +153,4 @@ function save_local_image($image_data, $slug) {
     }
 
     return $image_data;
-}
-
-function get_setting($pdo, $key, $default = '') {
-    $stmt = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key = ?");
-    $stmt->execute([$key]);
-    $row = $stmt->fetch();
-    return $row ? $row['setting_value'] : $default;
-}
-
-function update_setting($pdo, $key, $value) {
-    $stmt = $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?");
-    return $stmt->execute([$key, $value, $value]);
 }
