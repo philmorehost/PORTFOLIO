@@ -1,7 +1,7 @@
 <?php
 
 function e($string) {
-    return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars($string ?? '', ENT_QUOTES, 'UTF-8');
 }
 
 function generate_csrf_token() {
@@ -16,18 +16,30 @@ function verify_csrf_token($token) {
 }
 
 function log_api_call($pdo, $provider, $endpoint, $status, $response_time) {
-    $stmt = $pdo->prepare("INSERT INTO api_logs (provider, endpoint, status, response_time) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$provider, $endpoint, $status, $response_time]);
+    try {
+        $stmt = $pdo->prepare("INSERT INTO api_logs (provider, endpoint, status, response_time) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$provider, $endpoint, $status, $response_time]);
+    } catch (Exception $e) {}
 }
 
 function get_api_settings($pdo) {
-    $stmt = $pdo->query("SELECT * FROM api_settings LIMIT 1");
-    return $stmt->fetch();
+    try {
+        $stmt = $pdo->query("SELECT * FROM api_settings LIMIT 1");
+        $res = $stmt->fetch();
+        return $res ?: ['provider' => 'manual', 'deepseek_key' => '', 'gemini_key' => '', 'psi_key' => '', 'deepseek_base_url' => ''];
+    } catch (Exception $e) {
+        return ['provider' => 'manual', 'deepseek_key' => '', 'gemini_key' => '', 'psi_key' => '', 'deepseek_base_url' => ''];
+    }
 }
 
 function get_admin_profile($pdo) {
-    $stmt = $pdo->query("SELECT * FROM admin_profile LIMIT 1");
-    return $stmt->fetch();
+    try {
+        $stmt = $pdo->query("SELECT * FROM admin_profile LIMIT 1");
+        $res = $stmt->fetch();
+        return $res ?: ['full_name' => 'Cyber Architect', 'bio' => 'Security Specialist', 'whatsapp_number' => '', 'email' => ''];
+    } catch (Exception $e) {
+        return ['full_name' => 'Cyber Architect', 'bio' => 'Security Specialist', 'whatsapp_number' => '', 'email' => ''];
+    }
 }
 
 function call_ai_service($pdo, $prompt) {
