@@ -39,21 +39,6 @@ $logs = $stmt->fetchAll();
     <meta charset="UTF-8">
     <title>Nexus API Manager | Portfolio 1.0</title>
     <link rel="stylesheet" href="<?php echo $baseUrl; ?>/assets/css/theme.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'pitch-black': '#000000',
-                        'sharp-orange': '#FF6600',
-                        'glossy-purple': '#BF00FF',
-                        'text-dim': '#888888',
-                    }
-                }
-            }
-        }
-    </script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-pitch-black text-white p-4 md:p-10">

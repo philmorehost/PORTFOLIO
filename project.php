@@ -28,21 +28,6 @@ $baseUrl = get_base_url();
     <title><?php echo e($project['title']); ?> | <?php echo e($profile['full_name']); ?></title>
 
     <link rel="stylesheet" href="<?php echo $baseUrl; ?>/assets/css/theme.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'pitch-black': '#000000',
-                        'sharp-orange': '#FF6600',
-                        'glossy-purple': '#BF00FF',
-                        'text-dim': '#888888',
-                    }
-                }
-            }
-        }
-    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
 
     <script src="https://unpkg.com/lucide@latest"></script>
