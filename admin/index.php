@@ -183,7 +183,7 @@ $projects = $stmt->fetchAll();
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button onclick='editProject(<?php echo json_encode($proj); ?>)' class="p-2 bg-white/5 border border-white/10 rounded hover:text-sharp-orange transition-colors"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                            <button data-proj='<?php echo e(json_encode($proj), ENT_QUOTES, 'UTF-8'); ?>' onclick='editProject(JSON.parse(this.dataset.proj))' class="p-2 bg-white/5 border border-white/10 rounded hover:text-sharp-orange transition-colors"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
                             <form method="POST" onsubmit="return confirm('Purge this node?')" class="inline">
                                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                                 <input type="hidden" name="id" value="<?php echo $proj['id']; ?>">
@@ -261,7 +261,6 @@ $projects = $stmt->fetchAll();
                         keywords: data.keywords
                     });
 
-                    // Auto-screenshot using microlink as a fallback/example
                     const thumb = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&embed=screenshot.url`;
                     document.getElementById('projectThumb').value = thumb;
 

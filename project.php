@@ -186,6 +186,20 @@ $mainTitle = trim($titleParts[0]);
 
     <script>
         lucide.createIcons();
+
+        barba.init({
+            transitions: [{
+                name: 'opacity-transition',
+                leave(data) {
+                    return gsap.to(data.current.container, { opacity: 0, y: 10 });
+                },
+                enter(data) {
+                    lucide.createIcons();
+                    window.scrollTo(0, 0);
+                    return gsap.from(data.next.container, { opacity: 0, y: 10 });
+                }
+            }]
+        });
     </script>
 </body>
 </html>
